@@ -1,0 +1,1 @@
+# BingoSRM_front
