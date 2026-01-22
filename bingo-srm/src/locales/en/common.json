@@ -1,0 +1,617 @@
+{
+  "placeholder": {
+    "username": "Username",
+    "password": "Password"
+  },
+  "button": {
+    "login": "Login"
+  },
+  "title": {
+    "login": "Login"
+  },
+  "login": {
+    "subtitle": "Welcome back! Please login to your account."
+  },
+  "userProfile": {
+    "title": "Edit User Profile",
+    "userId": "User ID",
+    "name": "Name",
+    "password": "Password",
+    "changePassword": "Change",
+    "passwordConfirm": "Password Confirmation",
+    "email": "Email",
+    "contact": "Contact (Mobile)",
+    "department": "Department",
+    "position": "Position",
+    "notes": "Account Request Reason/Notes",
+    "save": "Save"
+  },
+  "navigation": {
+    "group-basic": "Basic Information",
+    "group-sr": "SR Management",
+    "user-management": "User Management",
+
+    "user": "User Management",
+    "user-system-manager": "System Manager",
+    "program-manager": "Program Management",
+    "program-auth-manager": "Program Access Control",
+
+    "sr": "Service Request",
+    "sr-request": "SR Request",
+    "sr-receive": "SR Intake",
+    "sr-process": "SR Processing",
+    "sr-verify": "SR Verification",
+    "sr-complete": "SR Completion",
+    "sr-eval": "SR Evaluation",
+    "logout": "Log Out"
+  },
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "Manage system user accounts",
+    "searchConditions": "Search Conditions",
+    "fields": {
+      "userId": "User ID",
+      "name": "Name",
+      "role": "Role",
+      "organization": "Organization",
+      "position": "Position",
+      "status": "Status",
+      "email": "Email",
+      "phone": "Phone",
+      "workLocation": "Work Location",
+      "remarks": "Account Status Reason/Remarks",
+      "password": "Password",
+      "passwordConfirm": "Password Confirmation"
+    },
+    "placeholders": {
+      "userId": "User ID",
+      "name": "Name",
+      "organization": "Organization",
+      "position": "Position",
+      "select": "Select"
+    },
+    "options": {
+      "all": "All",
+      "admin": "Admin",
+      "user": "User",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "buttons": {
+      "reset": "Reset",
+      "search": "Search",
+      "register": "Register",
+      "save": "Save",
+      "list": "List",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "checkDuplicate": "Check Duplicate",
+      "showPassword": "Show"
+    },
+    "totalUsers": "Total {{count}} users",
+    "dialog": {
+      "createTitle": "Register User",
+      "editTitle": "Edit User",
+      "deleteTitle": "Delete User",
+      "deleteConfirm": "Are you sure you want to delete user \"{{name}}\"?"
+    },
+    "roles": {
+      "admin": "Admin",
+      "user": "User"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+  "systemManager": {
+    "title": "System Manager",
+    "subtitle": "Assign permissions for each system manager",
+    "managerList": "System Managers",
+    "searchPlaceholder": "Search by User ID or Name",
+    "totalManagers": "Total {{count}} managers",
+    "permissionAssignment": "Assigned Systems",
+    "selectManager": "Please select a system manager",
+    "labels": {
+      "userId": "User ID",
+      "role": "Role"
+    },
+    "buttons": {
+      "refresh": "Refresh",
+      "save": "Save"
+    },
+    "permissions": {
+      "simpleInquiry": "Simple/Usage Inquiry",
+      "taskReview": "Task/Job Review",
+      "infoRequest": "Information/Data Request",
+      "simpleOperation": "Simple Error/Defect",
+      "featureModification": "Feature Modification/Development",
+      "serverWork": "Server Work",
+      "securityWork": "Security Work",
+      "backup": "Backup/Recovery",
+      "configAdd": "Configuration Information Add",
+      "functionCheck": "Function Restoration",
+      "newDevelopment": "New Development",
+      "uiUxChange": "UI/UX Change",
+      "networkWork": "Network Work",
+      "dbWork": "DB Work",
+      "configChange": "Configuration Information Change",
+      "etc": "Others"
+    }
+  },
+  "programManagement": {
+    "title": "Program Management",
+    "subtitle": "Manage system menu structure",
+    "menuList": "Menu List",
+    "menuDetails": "Menu Details",
+    "fields": {
+      "parentMenu": "Parent Menu",
+      "menuName": "Menu Name",
+      "menuUrl": "Menu URL",
+      "sortOrder": "Sort Order",
+      "visibility": "Menu Visibility"
+    },
+    "options": {
+      "show": "Show",
+      "hide": "Hide"
+    },
+    "buttons": {
+      "search": "Search",
+      "delete": "Delete",
+      "add": "Add",
+      "save": "Save"
+    }
+  },
+  "programAccess": {
+    "title": "Program Access Control",
+    "subtitle": "Manage user access permissions to programs",
+    "userRoles": "User Roles",
+    "accessControl": "Access Control",
+    "buttons": {
+      "save": "Save"
+    }
+  },
+  "srRequest": {
+    "title": "SR Request",
+    "subtitle": "Register and manage service requests",
+    "searchConditions": "Search Conditions",
+    "fields": {
+      "srNumber": "SR Number",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "changeType": "Change Type",
+      "requesterId": "Requester ID/Name",
+      "title": "Title",
+      "content": "Content"
+    },
+    "placeholders": {
+      "applicationMonth": "(e.g.)2023"
+    },
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "requestDate": "Request Date",
+      "receiptDateTime": "Receipt Date Time",
+      "processingDateTime": "Processing Date Time",
+      "reRequestSR": "Re-request SR"
+    },
+    "options": {
+      "all": "All",
+      "simpleInquiry": "Simple/Usage Inquiry",
+      "workTask": "Work/Task Request",
+      "infoRequest": "Information/Data Request",
+      "featureNotWorking": "Feature Not Working",
+      "simpleError": "Simple Error/Defect",
+      "newDevelopment": "New Development",
+      "featureModification": "Feature Modification/Development",
+      "uiUxChange": "UI/UX Change",
+      "serverWork": "Server Work",
+      "networkWork": "Network Work",
+      "securityWork": "Security Work",
+      "dbWork": "DB Work",
+      "backupRestore": "Backup/Restore",
+      "configChange": "Configuration Change",
+      "configAdd": "Configuration Addition",
+      "other": "Other",
+      "urgent": "Urgent",
+      "normal": "Normal",
+      "simple": "Simple"
+    },
+    "buttons": {
+      "register": "Register",
+      "reset": "Reset",
+      "search": "Search",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete the selected SR?"
+    }
+  },
+  "srReceive": {
+    "title": "SR Intake",
+    "subtitle": "Receive and manage service requests",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "errorType": "Error Type",
+      "requestDate": "Request Date",
+      "receiveDateTime": "Receive Date Time",
+      "productionRequest": "Production Request",
+      "productionComplete": "Production Complete"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete the selected SR?"
+    }
+  },
+  "srRequestEdit": {
+    "titleCreate": "Register SR Request",
+    "titleEdit": "Edit SR Request",
+    "sections": {
+      "requesterInfo": "Requester Information",
+      "requestDetails": "Request Details"
+    },
+    "fields": {
+      "srNumber": "SR Number",
+      "requestDateTime": "Request Date Time",
+      "name": "Name",
+      "department": "Department",
+      "contact": "Contact",
+      "email": "Email",
+      "managerMessage": "Manager Message",
+      "requestSummary": "Request Summary",
+      "requestReason": "Request Reason",
+      "attachment": "Attachment"
+    },
+    "buttons": {
+      "list": "List",
+      "save": "Save",
+      "browseFile": "Browse File"
+    }
+  },
+  "srReceiveEdit": {
+    "title": "SR Intake Edit",
+    "list": "List",
+    "save": "Save",
+    "srInfo": "SR Information",
+    "requestDate": "Request Date Time",
+    "requestCategory": "Request Category",
+    "requestType": "Request Type",
+    "selectPlaceholder": "Select",
+    "general": "General",
+    "simple": "Simple",
+    "urgent": "Urgent",
+    "application": "Application",
+    "infrastructure": "Infrastructure",
+    "requesterInfo": "Requester Information",
+    "name": "Name",
+    "department": "Department",
+    "contact": "Contact",
+    "email": "Email",
+    "referenceId": "Reference ID",
+    "requestDetails": "Request Details (Technical)",
+    "requestTitle": "Request Title",
+    "requestDetailContent": "Request Detail Content",
+    "requestAttachment": "Request Attachment",
+    "srReception": "SR Intake",
+    "receiver": "Receiver",
+    "receptionDate": "Reception Date Time",
+    "changeClassification": "Change Classification",
+    "changeType": "Change Type",
+    "srProcessingTime": "SR Processing Time",
+    "timeClassification": "Time Classification",
+    "hours": "Hours",
+    "days": "Days",
+    "weeks": "Weeks",
+    "months": "Months"
+  },
+  "srProcess": {
+    "title": "SR Processing",
+    "subtitle": "Process and manage service requests",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "requestDate": "Request Date",
+      "inspectionDateTime": "Inspection Date Time",
+      "processingDateTime": "Processing Date Time",
+      "reRequestSR": "Re-request SR"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete the selected SR?"
+    }
+  },
+  "srProcessEdit": {
+    "title": "SR Processing Edit",
+    "list": "List",
+    "save": "Save",
+    "srInfo": "SR Information",
+    "requestDateTime": "Request Date Time",
+    "requestCategory": "Request Category",
+    "requestType": "Request Type",
+    "general": "General",
+    "application": "Application",
+    "requesterInfo": "Requester Information",
+    "name": "Name",
+    "department": "Department",
+    "contact": "Contact",
+    "email": "Email",
+    "referenceId": "Reference ID",
+    "requestDetails": "Request Details (Technical)",
+    "requestTitle": "Request Title",
+    "requestDetailContent": "Request Detail Content",
+    "requestAttachment": "Request Attachment",
+    "srProcessingContent": "SR Processing Content (Technical)",
+    "receiver": "Receiver",
+    "processingPerson": "Processing Person",
+    "inspectionDateTime": "Inspection Date Time",
+    "processingDateTime": "Processing Date Time",
+    "changeClassification": "Change Classification",
+    "changeType": "Change Type",
+    "srProcessingTime": "SR Processing Time",
+    "timeClassification": "Time Classification",
+    "processingMethod": "Processing Method",
+    "dataModification": "Data Modification",
+    "programModification": "Program Modification",
+    "deployment": "Deployment",
+    "infrastructureWork": "Infrastructure Work",
+    "processingDetails": "Processing Details",
+    "etc": "Etc",
+    "processingAttachment": "Processing Attachment"
+  },
+  "srVerify": {
+    "title": "SR Verification",
+    "subtitle": "Verify and manage service requests",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "requestDate": "Request Date",
+      "inspectionDateTime": "Inspection Date Time",
+      "processingDateTime": "Processing Date Time",
+      "reRequestSR": "Re-request SR"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete the selected SR?"
+    }
+  },
+  "srVerifyEdit": {
+    "title": "SR Verification Edit",
+    "list": "List",
+    "save": "Save",
+    "srInfo": "SR Information",
+    "requestDateTime": "Request Date Time",
+    "requestCategory": "Request Category",
+    "requestType": "Request Type",
+    "general": "General",
+    "application": "Application",
+    "requesterInfo": "Requester Information",
+    "name": "Name",
+    "department": "Department",
+    "contact": "Contact",
+    "email": "Email",
+    "referenceId": "Reference ID",
+    "requestDetails": "Request Details (Technical)",
+    "requestTitle": "Request Title",
+    "requestDetailContent": "Request Detail Content",
+    "requestAttachment": "Request Attachment",
+    "srProcessingContent": "SR Processing Content (Technical)",
+    "receiver": "Receiver",
+    "processingPerson": "Processing Person",
+    "verificationPerson": "Verification Person",
+    "completionPerson": "Completion Person",
+    "inspectionDateTime": "Inspection Date Time",
+    "processingDateTime": "Processing Date Time",
+    "changeClassification": "Change Classification",
+    "changeType": "Change Type",
+    "srProcessingTime": "SR Processing Time",
+    "timeClassification": "Time Classification",
+    "processingMethod": "Processing Method",
+    "dataModification": "Data Modification",
+    "programModification": "Program Modification",
+    "deployment": "Deployment",
+    "infrastructureWork": "Infrastructure Work",
+    "processingDetails": "Processing Details",
+    "verificationDetails": "Verification Details",
+    "etc": "Etc",
+    "processingAttachment": "Response Attachment"
+  },
+  "srComplete": {
+    "title": "SR Completion",
+    "subtitle": "Complete and manage service requests",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "requestDate": "Request Date",
+      "inspectionDateTime": "Inspection Date Time",
+      "processingDateTime": "Processing Date Time",
+      "reRequestSR": "Re-request SR"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete the selected SR?"
+    }
+  },
+  "srCompleteEdit": {
+    "title": "SR Completion Edit",
+    "list": "List",
+    "save": "Save",
+    "srInfo": "SR Information",
+    "requestDateTime": "Request Date Time",
+    "requestCategory": "Request Category",
+    "requestType": "Request Type",
+    "general": "General",
+    "application": "Application",
+    "requesterInfo": "Requester Information",
+    "name": "Name",
+    "department": "Department",
+    "contact": "Contact",
+    "email": "Email",
+    "referenceId": "Reference ID",
+    "requestDetails": "Request Details (Technical)",
+    "requestTitle": "Request Title",
+    "requestDetailContent": "Request Detail Content",
+    "requestAttachment": "Request Attachment",
+    "srProcessingContent": "SR Processing Content (Technical)",
+    "receiver": "Receiver",
+    "processingPerson": "Processing Person",
+    "verificationPerson": "Verification Person",
+    "completionPerson": "Completion Person",
+    "inspectionDateTime": "Inspection Date Time",
+    "processingDateTime": "Processing Date Time",
+    "changeClassification": "Change Classification",
+    "changeType": "Change Type",
+    "srProcessingTime": "SR Processing Time",
+    "timeClassification": "Time Classification",
+    "processingMethod": "Processing Method",
+    "dataModification": "Data Modification",
+    "programModification": "Program Modification",
+    "deployment": "Deployment",
+    "infrastructureWork": "Infrastructure Work",
+    "processingDetails": "Processing Details",
+    "verificationDetails": "Verification Details",
+    "completionDetails": "Completion Details",
+    "etc": "Etc",
+    "processingAttachment": "Response Attachment"
+  },
+  "srEvaluation": {
+    "title": "SR Evaluation",
+    "subtitle": "Evaluate and manage service requests",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR Number",
+      "srTitle": "SR Title",
+      "applicationMonth": "Application Month",
+      "requestType": "Request Type",
+      "requestDate": "Request Date",
+      "inspectionDateTime": "Inspection Date Time",
+      "processingDateTime": "Processing Date Time",
+      "reRequestSR": "Re-request SR"
+    },
+    "menu": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "deleteTitle": "Delete SR",
+      "srNumber": "SR Number",
+      "title": "Title",
+      "confirmMessage": "Are you sure you want to delete this?"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "download": "Download"
+    }
+  },
+  "srEvaluationEdit": {
+    "title": "SR Evaluation Edit",
+    "list": "List",
+    "save": "Save",
+    "srInfo": "SR Information",
+    "requestDateTime": "Request Date Time",
+    "requestCategory": "Request Category",
+    "requestType": "Request Type",
+    "general": "General",
+    "application": "Application",
+    "requesterInfo": "Requester Information",
+    "name": "Name",
+    "department": "Department",
+    "contact": "Contact",
+    "email": "Email",
+    "referenceId": "Reference ID",
+    "requestDetails": "Request Details (Technical)",
+    "requestTitle": "Request Title",
+    "requestDetailContent": "Request Detail Content",
+    "requestAttachment": "Request Attachment",
+    "srProcessingContent": "SR Processing Content (Technical)",
+    "receiver": "Receiver",
+    "processingPerson": "Processing Person",
+    "verificationPerson": "Verification Person",
+    "completionPerson": "Completion Person",
+    "inspectionDateTime": "Inspection Date Time",
+    "processingDateTime": "Processing Date Time",
+    "changeClassification": "Change Classification",
+    "changeType": "Change Type",
+    "srProcessingTime": "SR Processing Time",
+    "timeClassification": "Time Classification",
+    "processingMethod": "Processing Method",
+    "dataModification": "Data Modification",
+    "programModification": "Program Modification",
+    "deployment": "Deployment",
+    "infrastructureWork": "Infrastructure Work",
+    "processingDetails": "Processing Details",
+    "verificationDetails": "Verification Details",
+    "completionDetails": "Completion Details",
+    "etc": "Etc",
+    "processingAttachment": "Response Attachment",
+    "satisfaction": "Satisfaction",
+    "selectPlaceholder": "Please select",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  }
+}

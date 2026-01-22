@@ -1,0 +1,617 @@
+{
+  "placeholder": {
+    "username": "아이디",
+    "password": "비밀번호"
+  },
+  "button": {
+    "login": "로그인"
+  },
+  "title": {
+    "login": "로그인"
+  },
+  "login": {
+    "subtitle": "다시 오신 것을 환영합니다! 계정에 로그인하세요."
+  },
+  "userProfile": {
+    "title": "사용자 정보 수정",
+    "userId": "사용자 아이디",
+    "name": "성명",
+    "password": "비밀번호",
+    "changePassword": "변경",
+    "passwordConfirm": "비밀번호 확인",
+    "email": "이메일",
+    "contact": "연락처(휴대폰)",
+    "department": "소속",
+    "position": "직급",
+    "notes": "계정신청사유/비고",
+    "save": "저장"
+  },
+  "navigation": {
+    "group-basic": "기준정보",
+    "group-sr": "SR관리",
+    "user-management": "사용자관리",
+
+    "user": "기준정보",
+    "user-system-manager": "시스템담당자관리",
+    "program-manager": "프로그램관리",
+    "program-auth-manager": "프로그램접근관리",
+
+    "sr": "SR관리",
+    "sr-request": "SR요청",
+    "sr-receive": "SR접수",
+    "sr-process": "SR처리",
+    "sr-verify": "SR검증",
+    "sr-complete": "SR완료",
+    "sr-eval": "SR평가",
+    "logout": "로그아웃"
+  },
+  "userManagement": {
+    "title": "사용자관리",
+    "subtitle": "시스템 사용자 계정을 관리합니다",
+    "searchConditions": "검색조건",
+    "fields": {
+      "userId": "사용자ID",
+      "name": "성명",
+      "role": "권한",
+      "organization": "소속",
+      "position": "직급",
+      "status": "상태",
+      "email": "이메일",
+      "phone": "연락처(휴대폰)",
+      "workLocation": "근무위치",
+      "remarks": "계정상태사유/비고",
+      "password": "비밀번호",
+      "passwordConfirm": "비밀번호 확인"
+    },
+    "placeholders": {
+      "userId": "사용자아이디",
+      "name": "성명",
+      "organization": "소속",
+      "position": "직급",
+      "select": "선택하세요"
+    },
+    "options": {
+      "all": "전체",
+      "admin": "관리자",
+      "user": "사용자",
+      "active": "사용중",
+      "inactive": "중지"
+    },
+    "buttons": {
+      "reset": "초기화",
+      "search": "검색",
+      "register": "등록",
+      "save": "저장",
+      "list": "목록",
+      "edit": "수정",
+      "delete": "삭제",
+      "cancel": "취소",
+      "checkDuplicate": "중복확인",
+      "showPassword": "보정"
+    },
+    "totalUsers": "총 {{count}}명의 사용자",
+    "dialog": {
+      "createTitle": "사용자 등록",
+      "editTitle": "사용자 수정",
+      "deleteTitle": "사용자 삭제",
+      "deleteConfirm": "\"{{name}}\" 사용자를 삭제하시겠습니까?"
+    },
+    "roles": {
+      "admin": "관리자",
+      "user": "사용자"
+    },
+    "statuses": {
+      "active": "사용중",
+      "inactive": "중지"
+    }
+  },
+  "systemManager": {
+    "title": "시스템 담당자 관리",
+    "subtitle": "시스템 담당자별 권한을 설정합니다",
+    "managerList": "시스템 담당자",
+    "searchPlaceholder": "사용자ID 또는 이름으로 검색",
+    "totalManagers": "총 {{count}}명의 담당자",
+    "permissionAssignment": "담당시스템",
+    "selectManager": "시스템 담당자를 선택하세요",
+    "labels": {
+      "userId": "아이디",
+      "role": "담당"
+    },
+    "buttons": {
+      "refresh": "재조회",
+      "save": "저장"
+    },
+    "permissions": {
+      "simpleInquiry": "단순/사용법 문의",
+      "taskReview": "업무/직업 검토",
+      "infoRequest": "정보/자료 요청",
+      "simpleOperation": "단순 오류/결함",
+      "featureModification": "기능 수정/개발",
+      "serverWork": "서버 작업",
+      "securityWork": "보안 작업",
+      "backup": "백업/복구",
+      "configAdd": "구성정보 추가",
+      "functionCheck": "기능 복가",
+      "newDevelopment": "신규 개발",
+      "uiUxChange": "UI/UX 변경",
+      "networkWork": "네트워크 작업",
+      "dbWork": "DB 작업",
+      "configChange": "구성정보 변경",
+      "etc": "기타"
+    }
+  },
+  "programManagement": {
+    "title": "프로그램관리",
+    "subtitle": "시스템 메뉴 구조를 관리합니다",
+    "menuList": "메뉴목록",
+    "menuDetails": "메뉴정보",
+    "fields": {
+      "parentMenu": "상위메뉴명",
+      "menuName": "메뉴명",
+      "menuUrl": "메뉴URL",
+      "sortOrder": "정렬순서",
+      "visibility": "메뉴표시여부"
+    },
+    "options": {
+      "show": "표시",
+      "hide": "미표시"
+    },
+    "buttons": {
+      "search": "조회",
+      "delete": "삭제",
+      "add": "추가",
+      "save": "저장"
+    }
+  },
+  "programAccess": {
+    "title": "프로그램접근관리",
+    "subtitle": "사용자별 프로그램 접근 권한을 관리합니다",
+    "userRoles": "사용자별 권한",
+    "accessControl": "접근권한",
+    "buttons": {
+      "save": "저장"
+    }
+  },
+  "srRequest": {
+    "title": "SR요청",
+    "subtitle": "서비스 요청을 등록하고 관리합니다",
+    "searchConditions": "검색조건",
+    "fields": {
+      "srNumber": "SR번호",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "changeType": "변경분류",
+      "requesterId": "요청자ID/이름",
+      "title": "제목",
+      "content": "내용"
+    },
+    "placeholders": {
+      "applicationMonth": "(예)2023"
+    },
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "requestDate": "요청일",
+      "receiptDateTime": "접수일시",
+      "processingDateTime": "처리일시",
+      "reRequestSR": "재요청SR"
+    },
+    "options": {
+      "all": "전체",
+      "simpleInquiry": "단순/사용법 문의",
+      "workTask": "업무/작업 건도",
+      "infoRequest": "정보/자료 요청",
+      "featureNotWorking": "기능 불가",
+      "simpleError": "단순 오류/불량",
+      "newDevelopment": "신규 개발",
+      "featureModification": "기능 수정/개발",
+      "uiUxChange": "UI/UX 변경",
+      "serverWork": "서버 작업",
+      "networkWork": "네트워크 작업",
+      "securityWork": "보안 작업",
+      "dbWork": "DB 작업",
+      "backupRestore": "백업/복구",
+      "configChange": "구성정보 변경",
+      "configAdd": "구성정보 추가",
+      "other": "기타",
+      "urgent": "긴급",
+      "normal": "일반",
+      "simple": "단순"
+    },
+    "buttons": {
+      "register": "등록",
+      "reset": "초기화",
+      "search": "검색",
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "선택한 SR을 삭제하시겠습니까?"
+    }
+  },
+  "srReceive": {
+    "title": "SR접수",
+    "subtitle": "서비스 요청을 접수하고 관리합니다",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "errorType": "오류구분",
+      "requestDate": "요청일",
+      "receiveDateTime": "접수일시",
+      "productionRequest": "제작요청",
+      "productionComplete": "제작완료"
+    },
+    "buttons": {
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "선택한 SR을 삭제하시겠습니까?"
+    }
+  },
+  "srRequestEdit": {
+    "titleCreate": "SR요청 등록",
+    "titleEdit": "SR요청 수정",
+    "sections": {
+      "requesterInfo": "요청자 정보",
+      "requestDetails": "요청사유(상세기술)"
+    },
+    "fields": {
+      "srNumber": "SR번호",
+      "requestDateTime": "요청일시",
+      "name": "성명",
+      "department": "소속",
+      "contact": "연락처",
+      "email": "이메일",
+      "managerMessage": "담당 메세지",
+      "requestSummary": "요청내역",
+      "requestReason": "요청사유내용",
+      "attachment": "요청첨부파일"
+    },
+    "buttons": {
+      "list": "목록",
+      "save": "저장",
+      "browseFile": "파일찾기"
+    }
+  },
+  "srReceiveEdit": {
+    "title": "SR접수 수정",
+    "list": "목록",
+    "save": "저장",
+    "srInfo": "SR 정보",
+    "requestDate": "요청일시",
+    "requestCategory": "요청분류",
+    "requestType": "요청구분",
+    "selectPlaceholder": "선택하세요",
+    "general": "일반",
+    "simple": "단순",
+    "urgent": "긴급",
+    "application": "응용프로그램",
+    "infrastructure": "인프라",
+    "requesterInfo": "요청자 정보",
+    "name": "성명",
+    "department": "소속",
+    "contact": "연락처",
+    "email": "이메일",
+    "referenceId": "참조 아이디",
+    "requestDetails": "요청사항(상세기술)",
+    "requestTitle": "요청제목",
+    "requestDetailContent": "요청상세내용",
+    "requestAttachment": "요청첨부파일",
+    "srReception": "SR 접수",
+    "receiver": "접수자",
+    "receptionDate": "접수일시",
+    "changeClassification": "변경분류",
+    "changeType": "변경유형",
+    "srProcessingTime": "SR처리시간",
+    "timeClassification": "사간구분",
+    "hours": "시간",
+    "days": "일",
+    "weeks": "주",
+    "months": "개월"
+  },
+  "srProcess": {
+    "title": "SR처리",
+    "subtitle": "서비스 요청을 처리하고 관리합니다",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "requestDate": "요청일",
+      "inspectionDateTime": "접수일시",
+      "processingDateTime": "처리일시",
+      "reRequestSR": "재요청SR"
+    },
+    "buttons": {
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "선택한 SR을 삭제하시겠습니까?"
+    }
+  },
+  "srProcessEdit": {
+    "title": "SR처리 수정",
+    "list": "목록",
+    "save": "저장",
+    "srInfo": "SR 정보",
+    "requestDateTime": "요청일시",
+    "requestCategory": "요청분류",
+    "requestType": "요청구분",
+    "general": "일반",
+    "application": "응용프로그램",
+    "requesterInfo": "요청자 정보",
+    "name": "성명",
+    "department": "소속",
+    "contact": "연락처",
+    "email": "이메일",
+    "referenceId": "참조 아이디",
+    "requestDetails": "요청사항(상세기술)",
+    "requestTitle": "요청제목",
+    "requestDetailContent": "요청상세내용",
+    "requestAttachment": "요청첨부파일",
+    "srProcessingContent": "SR 처리 내용(상세기술)",
+    "receiver": "접수자",
+    "processingPerson": "처리담당",
+    "inspectionDateTime": "접수일시",
+    "processingDateTime": "처리일시",
+    "changeClassification": "변경분류",
+    "changeType": "변경유형",
+    "srProcessingTime": "SR 처리시간",
+    "timeClassification": "사간구분",
+    "processingMethod": "처리방법",
+    "dataModification": "데이터수정",
+    "programModification": "프로그램수정",
+    "deployment": "배포",
+    "infrastructureWork": "인프라작업",
+    "processingDetails": "처리내역",
+    "etc": "기타",
+    "processingAttachment": "중담창부파일"
+  },
+  "srVerify": {
+    "title": "SR검증",
+    "subtitle": "서비스 요청을 검증하고 관리합니다",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "requestDate": "요청일",
+      "inspectionDateTime": "접수일시",
+      "processingDateTime": "처리일시",
+      "reRequestSR": "재요청SR"
+    },
+    "buttons": {
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "선택한 SR을 삭제하시겠습니까?"
+    }
+  },
+  "srVerifyEdit": {
+    "title": "SR검증 수정",
+    "list": "목록",
+    "save": "저장",
+    "srInfo": "SR 정보",
+    "requestDateTime": "요청일시",
+    "requestCategory": "요청분류",
+    "requestType": "요청구분",
+    "general": "일반",
+    "application": "응용프로그램",
+    "requesterInfo": "요청자 정보",
+    "name": "성명",
+    "department": "소속",
+    "contact": "연락처",
+    "email": "이메일",
+    "referenceId": "참조 아이디",
+    "requestDetails": "요청사항(상세기술)",
+    "requestTitle": "요청제목",
+    "requestDetailContent": "요청상세내용",
+    "requestAttachment": "요청첨부파일",
+    "srProcessingContent": "SR 처리 내용(상세기술)",
+    "receiver": "접수자",
+    "processingPerson": "처리담당",
+    "verificationPerson": "검증담당",
+    "completionPerson": "완료담당",
+    "inspectionDateTime": "접수일시",
+    "processingDateTime": "처리일시",
+    "changeClassification": "변경분류",
+    "changeType": "변경유형",
+    "srProcessingTime": "SR 처리시간",
+    "timeClassification": "사간구분",
+    "processingMethod": "처리방법",
+    "dataModification": "데이터수정",
+    "programModification": "프로그램수정",
+    "deployment": "배포",
+    "infrastructureWork": "인프라작업",
+    "processingDetails": "처리내역",
+    "verificationDetails": "검증내역",
+    "etc": "기타",
+    "processingAttachment": "응답첨부파일"
+  },
+  "srComplete": {
+    "title": "SR완료",
+    "subtitle": "서비스 요청을 완료하고 관리합니다",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "requestDate": "요청일",
+      "inspectionDateTime": "접수일시",
+      "processingDateTime": "처리일시",
+      "reRequestSR": "재요청SR"
+    },
+    "buttons": {
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "선택한 SR을 삭제하시겠습니까?"
+    }
+  },
+  "srCompleteEdit": {
+    "title": "SR완료 수정",
+    "list": "목록",
+    "save": "저장",
+    "srInfo": "SR 정보",
+    "requestDateTime": "요청일시",
+    "requestCategory": "요청분류",
+    "requestType": "요청구분",
+    "general": "일반",
+    "application": "응용프로그램",
+    "requesterInfo": "요청자 정보",
+    "name": "성명",
+    "department": "소속",
+    "contact": "연락처",
+    "email": "이메일",
+    "referenceId": "참조 아이디",
+    "requestDetails": "요청사항(상세기술)",
+    "requestTitle": "요청제목",
+    "requestDetailContent": "요청상세내용",
+    "requestAttachment": "요청첨부파일",
+    "srProcessingContent": "SR 처리 내용(상세기술)",
+    "receiver": "접수자",
+    "processingPerson": "처리담당",
+    "verificationPerson": "검증담당",
+    "completionPerson": "완료담당",
+    "inspectionDateTime": "접수일시",
+    "processingDateTime": "처리일시",
+    "changeClassification": "변경분류",
+    "changeType": "변경유형",
+    "srProcessingTime": "SR 처리시간",
+    "timeClassification": "사간구분",
+    "processingMethod": "처리방법",
+    "dataModification": "데이터수정",
+    "programModification": "프로그램수정",
+    "deployment": "배포",
+    "infrastructureWork": "인프라작업",
+    "processingDetails": "처리내역",
+    "verificationDetails": "검증내역",
+    "completionDetails": "완료내역",
+    "etc": "기타",
+    "processingAttachment": "응답첨부파일"
+  },
+  "srEvaluation": {
+    "title": "SR평가",
+    "subtitle": "서비스 요청을 평가하고 관리합니다",
+    "columns": {
+      "no": "No",
+      "srNumber": "SR번호",
+      "srTitle": "SR제목",
+      "applicationMonth": "신청년월",
+      "requestType": "요청구분",
+      "requestDate": "요청일",
+      "inspectionDateTime": "접수일시",
+      "processingDateTime": "처리일시",
+      "reRequestSR": "재요청SR"
+    },
+    "menu": {
+      "edit": "수정",
+      "delete": "삭제"
+    },
+    "dialog": {
+      "deleteTitle": "SR 삭제",
+      "srNumber": "SR번호",
+      "title": "제목",
+      "confirmMessage": "정말로 삭제하시겠습니까?"
+    },
+    "buttons": {
+      "cancel": "취소",
+      "delete": "삭제",
+      "download": "다운로드"
+    }
+  },
+  "srEvaluationEdit": {
+    "title": "SR평가 수정",
+    "list": "목록",
+    "save": "저장",
+    "srInfo": "SR 정보",
+    "requestDateTime": "요청일시",
+    "requestCategory": "요청분류",
+    "requestType": "요청구분",
+    "general": "일반",
+    "application": "응용프로그램",
+    "requesterInfo": "요청자 정보",
+    "name": "성명",
+    "department": "소속",
+    "contact": "연락처",
+    "email": "이메일",
+    "referenceId": "참조 아이디",
+    "requestDetails": "요청사항(상세기술)",
+    "requestTitle": "요청제목",
+    "requestDetailContent": "요청상세내용",
+    "requestAttachment": "요청첨부파일",
+    "srProcessingContent": "SR 처리 내용(상세기술)",
+    "receiver": "접수자",
+    "processingPerson": "처리담당",
+    "verificationPerson": "검증담당",
+    "completionPerson": "완료담당",
+    "inspectionDateTime": "접수일시",
+    "processingDateTime": "처리일시",
+    "changeClassification": "변경분류",
+    "changeType": "변경유형",
+    "srProcessingTime": "SR 처리시간",
+    "timeClassification": "시간구분",
+    "processingMethod": "처리방법",
+    "dataModification": "데이터수정",
+    "programModification": "프로그램수정",
+    "deployment": "배포",
+    "infrastructureWork": "인프라작업",
+    "processingDetails": "처리내역",
+    "verificationDetails": "검증내역",
+    "completionDetails": "완료내역",
+    "etc": "기타",
+    "processingAttachment": "응답첨부파일",
+    "satisfaction": "만족도",
+    "selectPlaceholder": "선택하세요",
+    "high": "상",
+    "medium": "중",
+    "low": "하"
+  }
+}
