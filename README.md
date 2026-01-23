@@ -8,7 +8,7 @@ A modern, full-featured Service Request Management (SRM) system built with Next.
 
 ### 🎯 Service Request Management
 
-- **Complete SR Lifecycle**: Request → Receive → Process → Evaluation → Verify → Complete
+- **Complete SR Lifecycle**: Request → Intake → Process → Evaluation → Verify → Complete
 - **Data Grid View**: Advanced table with sorting, filtering, and pagination using MUI X Data Grid
 - **Search & Filter**: Powerful search functionality with form-based filtering
 - **Edit Capabilities**: Inline editing for each SR stage
@@ -25,3 +25,5 @@ A modern, full-featured Service Request Management (SRM) system built with Next.
 - **Multi-language Support**: English (en) and Korean (ko)
 - **Dynamic Language Switching**: Change language on-the-fly
 - **i18next Integration**: Robust translation management
+
+
