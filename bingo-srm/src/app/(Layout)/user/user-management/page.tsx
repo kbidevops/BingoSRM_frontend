@@ -1,9 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import useLocale from "@/src/app/useLocale";
+import {
+  fetchUserList,
+  fetchCodeTypes,
+  fetchUserDetail,
+  updateUser,
+  type UserData,
+  type CodeItem,
+  type UserDetailResponse,
+} from "@/src/lib/auth";
+import { registerUser, type RegisterUserRequest } from "@/src/lib/registerUser";
+import { checkUserIdDuplicate } from "@/src/lib/registerUser";
+import { useSnackbar } from "notistack";
 
 import {
   Box,
@@ -49,24 +61,285 @@ interface User {
 }
 
 export default function UserManagement() {
+  // Work location codes state
+  const [workLocationCodes, setWorkLocationCodes] = useState<
+    import("@/src/lib/auth").CodeItem[]
+  >([]);
   useLocale();
   const { t } = useTranslation();
+  const { enqueueSnackbar } = useSnackbar();
+  const snackbarOptions = {
+    anchorOrigin: { vertical: "top" as const, horizontal: "center" as const },
+  };
 
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 10,
+    pageSize: 15,
   });
 
   const [searchRole, setSearchRole] = useState("ALL");
   const [searchStatus, setSearchStatus] = useState("ALL");
   const [searchExpanded, setSearchExpanded] = useState(true);
 
+  // Search form states
+  const [searchUserId, setSearchUserId] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchOrg, setSearchOrg] = useState("");
+  const [searchPosition, setSearchPosition] = useState("");
+
   const [openDialog, setOpenDialog] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  // API data states
+  const [users, setUsers] = useState<User[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [statusCodes, setStatusCodes] = useState<CodeItem[]>([]);
+  const [roleCodes, setRoleCodes] = useState<CodeItem[]>([]);
+
+  // Dialog form state
+  const [formData, setFormData] = useState({
+    userId: "",
+    userNm: "",
+    userPassword: "",
+    userPasswordConfirm: "",
+    email: "",
+    psitn: "",
+    clsf: "",
+    moblphon: "",
+    userTyCode: "",
+    userSttusCode: "",
+    acntReqstResn: "",
+    changePasswordYN: "N",
+    userLocat: "",
+  });
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  // Fetch users from API
+  const loadUsers = async (searchParams?: {
+    userId?: string;
+    userNm?: string;
+    psitn?: string;
+    userSttusCode?: string;
+    userTyCode?: string;
+  }) => {
+    setLoading(true);
+    try {
+      const response = await fetchUserList({
+        pageIndex: paginationModel.page + 1, // API uses 1-based indexing
+        recordCountPerPage: paginationModel.pageSize,
+        ...searchParams,
+      });
+
+      // Map UserData to User interface
+      const mappedUsers: User[] = response.resultList.map(
+        (userData: UserData, index: number) => ({
+          id: paginationModel.page * paginationModel.pageSize + index + 1,
+          userId: userData.userId,
+          name: userData.userNm,
+          role: userData.userTyCodeNm,
+          org: userData.psitn || "-",
+          position: userData.clsf || "-",
+          status: userData.userSttusCodeNm,
+        }),
+      );
+
+      setUsers(mappedUsers);
+      setTotalCount(response.pagination.totalCount);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, [paginationModel.page, paginationModel.pageSize]);
+
+  // Fetch status codes and role codes on mount
+  useEffect(() => {
+    const loadStatusCodes = async () => {
+      try {
+        const codes = await fetchCodeTypes("U0");
+        setStatusCodes(codes);
+        console.log("status codes", codes);
+      } catch (error) {
+        console.error("Failed to fetch status codes:", error);
+      }
+    };
+    const loadRoleCodes = async () => {
+      try {
+        const codes = await fetchCodeTypes("R0");
+        setRoleCodes(codes);
+        console.log("role codes", codes);
+      } catch (error) {
+        console.error("Failed to fetch role codes:", error);
+      }
+    };
+    loadStatusCodes();
+    loadRoleCodes();
+    // Load work location codes
+    const loadWorkLocationCodes = async () => {
+      try {
+        const codes = await fetchCodeTypes("L0");
+        setWorkLocationCodes(codes);
+      } catch (error) {
+        console.error("Failed to fetch work location codes:", error);
+      }
+    };
+    loadWorkLocationCodes();
+  }, []);
+
+  // Search handler
+  const handleSearch = () => {
+    // Build search parameters using direct query parameters (legacy approach)
+    const searchParams: {
+      userId?: string;
+      userNm?: string;
+      psitn?: string;
+      userSttusCode?: string;
+      userTyCode?: string;
+    } = {};
+
+    if (searchUserId) {
+      searchParams.userId = searchUserId;
+    }
+    if (searchName) {
+      searchParams.userNm = searchName;
+    }
+    if (searchOrg) {
+      searchParams.psitn = searchOrg;
+    }
+
+    // Send role.cmmnCode as userTyCode for role filtering
+    if (searchRole !== "ALL") {
+      searchParams.userTyCode = searchRole;
+    }
+
+    // Use selected status code if not ALL
+    if (searchStatus !== "ALL") {
+      searchParams.userSttusCode = searchStatus;
+    }
+
+    loadUsers(searchParams);
+  };
+
+  // Reset handler
+  const handleReset = () => {
+    setSearchUserId("");
+    setSearchName("");
+    setSearchOrg("");
+    setSearchPosition("");
+    setSearchRole("ALL");
+    setSearchStatus("ALL");
+    loadUsers();
+  };
+
+  // Load user details for editing
+  const handleEditUser = async (user: User) => {
+    try {
+      const userDetail = await fetchUserDetail(user.userId);
+      setFormData({
+        userId: userDetail.userId,
+        userNm: userDetail.userNm,
+        userPassword: "",
+        userPasswordConfirm: "",
+        email: userDetail.email || "",
+        psitn: userDetail.psitn || "",
+        clsf: userDetail.clsf || "",
+        moblphon: userDetail.moblphon || "",
+        userTyCode: userDetail.userTyCode,
+        userSttusCode: userDetail.userSttusCode,
+        acntReqstResn: userDetail.acntReqstResn || "",
+        changePasswordYN: "N",
+        userLocat: userDetail.userLocat || "",
+      });
+      setSelectedUser(user);
+      setDialogMode("edit");
+      setOpenDialog(true);
+    } catch (error) {
+      console.error("Failed to load user details:", error);
+    }
+  };
+
+  // Reset form for creating new user
+  const handleCreateUser = () => {
+    setFormData({
+      userId: "",
+      userNm: "",
+      userPassword: "",
+      userPasswordConfirm: "",
+      email: "",
+      psitn: "",
+      clsf: "",
+      moblphon: "",
+      userTyCode: "",
+      userSttusCode: "",
+      acntReqstResn: "",
+      changePasswordYN: "N",
+      userLocat: "",
+    });
+    setSelectedUser(null);
+    setDialogMode("create");
+    setOpenDialog(true);
+  };
+
+  // Save user (create or update)
+  const handleSaveUser = async () => {
+    setSaveLoading(true);
+    try {
+      if (dialogMode === "create") {
+        // Registration mode: use registerUser API
+        const registerData: RegisterUserRequest = {
+          userId: formData.userId,
+          userPassword: formData.userPassword, // Password field for registration
+          userNm: formData.userNm,
+          userTyCode: formData.userTyCode,
+          userSttusCode: formData.userSttusCode,
+          psitn: formData.psitn,
+          clsf: formData.clsf,
+          moblphon: formData.moblphon,
+          email: formData.email,
+          acntReqstResn: formData.acntReqstResn,
+          userLocat: formData.userLocat,
+        };
+        const result = await registerUser(registerData);
+        if (!result.success) {
+          enqueueSnackbar(result.message || "사용자 등록에 실패했습니다.", {
+            variant: "warning",
+            ...snackbarOptions,
+          });
+          setSaveLoading(false);
+          return;
+        }
+      } else {
+        // Update mode: use updateUser API
+        const updateData: import("@/src/lib/auth").UpdateUserRequest = {
+          userNm: formData.userNm,
+          userTyCode: formData.userTyCode,
+          userSttusCode: formData.userSttusCode,
+          psitn: formData.psitn,
+          clsf: formData.clsf,
+          moblphon: formData.moblphon,
+          email: formData.email,
+          acntReqstResn: formData.acntReqstResn,
+          userLocat: formData.userLocat,
+        };
+        await updateUser(formData.userId, updateData);
+      }
+      setOpenDialog(false);
+      loadUsers(); // Reload user list
+    } catch (error) {
+      console.error("Failed to save user:", error);
+      enqueueSnackbar("사용자 정보 저장에 실패했습니다.", { variant: "error" });
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const columns: GridColDef[] = [
     {
@@ -102,13 +375,15 @@ export default function UserManagement() {
       headerAlign: "center",
       renderCell: (params) => (
         <Chip
-          label={
-            params.value === "관리자"
-              ? t("userManagement.roles.admin")
-              : t("userManagement.roles.user")
-          }
+          label={params.value || "-"}
           size="small"
-          color={params.value === "관리자" ? "error" : "default"}
+          color={
+            params.value === "시스템관리자"
+              ? "error"
+              : params.value === "시스템담당자"
+                ? "primary"
+                : "default"
+          }
           sx={{
             borderRadius: 1.5,
             fontWeight: 600,
@@ -142,13 +417,15 @@ export default function UserManagement() {
       headerAlign: "center",
       renderCell: (params) => (
         <Chip
-          label={
-            params.value === "사용중"
-              ? t("userManagement.statuses.active")
-              : t("userManagement.statuses.inactive")
-          }
+          label={params.value}
           size="small"
-          color={params.value === "사용중" ? "success" : "default"}
+          color={
+            params.value === "승인"
+              ? "success"
+              : params.value === "대기"
+                ? "warning"
+                : "default"
+          }
           variant="outlined"
           sx={{
             borderRadius: 1.5,
@@ -174,27 +451,6 @@ export default function UserManagement() {
           <MoreVertIcon fontSize="small" />
         </IconButton>
       ),
-    },
-  ];
-
-  const rows = [
-    {
-      id: 1,
-      userId: "admin",
-      name: "홍길동",
-      role: "관리자",
-      org: "IT팀",
-      position: "차장",
-      status: "사용중",
-    },
-    {
-      id: 2,
-      userId: "user01",
-      name: "김철수",
-      role: "사용자",
-      org: "영업팀",
-      position: "대리",
-      status: "사용중",
     },
   ];
 
@@ -294,6 +550,8 @@ export default function UserManagement() {
               <TextField
                 label={t("userManagement.fields.userId")}
                 size="small"
+                value={searchUserId}
+                onChange={(e) => setSearchUserId(e.target.value)}
                 sx={{
                   width: "180px",
                   "& .MuiOutlinedInput-root": {
@@ -317,6 +575,8 @@ export default function UserManagement() {
               <TextField
                 label={t("userManagement.fields.name")}
                 size="small"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
                 sx={{
                   width: "180px",
                   "& .MuiOutlinedInput-root": {
@@ -361,17 +621,28 @@ export default function UserManagement() {
                 }}
                 value={searchRole}
                 onChange={(e) => setSearchRole(e.target.value)}
-                SelectProps={{ native: true }}
               >
-                <option value="ALL">{t("userManagement.options.all")}</option>
-                <option value="ADMIN">
-                  {t("userManagement.options.admin")}
-                </option>
-                <option value="USER">{t("userManagement.options.user")}</option>
+                <MenuItem value="ALL">
+                  {t("userManagement.options.all")}
+                </MenuItem>
+                {roleCodes
+                  .filter(
+                    (role) =>
+                      role.cmmnCode !== "R002" && role.cmmnCode !== "R004",
+                  )
+                  .map((role) =>
+                    role.cmmnCode ? (
+                      <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
+                        {role.cmmnCodeNm}
+                      </MenuItem>
+                    ) : null,
+                  )}
               </TextField>
               <TextField
                 label={t("userManagement.fields.organization")}
                 size="small"
+                value={searchOrg}
+                onChange={(e) => setSearchOrg(e.target.value)}
                 sx={{
                   width: "180px",
                   "& .MuiOutlinedInput-root": {
@@ -395,6 +666,8 @@ export default function UserManagement() {
               <TextField
                 label={t("userManagement.fields.position")}
                 size="small"
+                value={searchPosition}
+                onChange={(e) => setSearchPosition(e.target.value)}
                 sx={{
                   width: "180px",
                   "& .MuiOutlinedInput-root": {
@@ -439,15 +712,17 @@ export default function UserManagement() {
                 }}
                 value={searchStatus}
                 onChange={(e) => setSearchStatus(e.target.value)}
-                SelectProps={{ native: true }}
               >
-                <option value="ALL">{t("userManagement.options.all")}</option>
-                <option value="ACTIVE">
-                  {t("userManagement.options.active")}
-                </option>
-                <option value="INACTIVE">
-                  {t("userManagement.options.inactive")}
-                </option>
+                <MenuItem value="ALL">
+                  {t("userManagement.options.all")}
+                </MenuItem>
+                {statusCodes.map((status) =>
+                  status.cmmnCode ? (
+                    <MenuItem key={status.cmmnCode} value={status.cmmnCode}>
+                      {status.cmmnCodeNm || status.cmmnCode}
+                    </MenuItem>
+                  ) : null,
+                )}
               </TextField>
             </Stack>
             <Stack
@@ -460,6 +735,7 @@ export default function UserManagement() {
                 variant="outlined"
                 startIcon={<RefreshIcon fontSize="small" />}
                 size="small"
+                onClick={handleReset}
                 sx={{
                   borderRadius: 1.5,
                   textTransform: "none",
@@ -483,6 +759,7 @@ export default function UserManagement() {
                 variant="contained"
                 startIcon={<SearchIcon fontSize="small" />}
                 size="small"
+                onClick={handleSearch}
                 sx={{
                   borderRadius: 1.5,
                   textTransform: "none",
@@ -520,17 +797,13 @@ export default function UserManagement() {
             fontWeight: 500,
           }}
         >
-          {t("userManagement.totalUsers", { count: rows.length })}
+          {t("userManagement.totalUsers", { count: totalCount })}
         </Typography>
         <Button
           variant="contained"
           size="medium"
           startIcon={<PersonAddIcon />}
-          onClick={() => {
-            setSelectedUser(null);
-            setDialogMode("create");
-            setOpenDialog(true);
-          }}
+          onClick={handleCreateUser}
           sx={{
             borderRadius: 1.5,
             textTransform: "none",
@@ -604,12 +877,15 @@ export default function UserManagement() {
         }}
       >
         <DataGrid
-          rows={rows}
+          rows={users}
           columns={columns}
           pagination
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[10, 20, 50]}
+          pageSizeOptions={[5, 15, 30, 50]}
+          rowCount={totalCount}
+          paginationMode="server"
+          loading={loading}
           disableRowSelectionOnClick
           checkboxSelection={false}
           disableColumnMenu
@@ -637,7 +913,7 @@ export default function UserManagement() {
             pb: 2,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
             {dialogMode === "create"
               ? t("userManagement.dialog.createTitle")
               : t("userManagement.dialog.editTitle")}
@@ -663,7 +939,10 @@ export default function UserManagement() {
                     <TextField
                       size="small"
                       fullWidth
-                      defaultValue={selectedUser?.userId || ""}
+                      value={formData.userId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, userId: e.target.value })
+                      }
                       disabled={dialogMode === "edit"}
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -680,6 +959,37 @@ export default function UserManagement() {
                           borderRadius: 1.5,
                           textTransform: "none",
                           fontWeight: 500,
+                        }}
+                        onClick={async () => {
+                          if (!formData.userId) {
+                            enqueueSnackbar("아이디를 입력하세요.", {
+                              variant: "warning",
+                              ...snackbarOptions,
+                            });
+                            return;
+                          }
+                          const result = await checkUserIdDuplicate(
+                            formData.userId,
+                          );
+                          if (result.taken) {
+                            enqueueSnackbar("이미 사용 중인 아이디입니다.", {
+                              variant: "error",
+                              ...snackbarOptions,
+                            });
+                          } else if (result.error) {
+                            enqueueSnackbar(
+                              "중복 확인 중 오류 발생: " + result.error,
+                              {
+                                variant: "error",
+                                ...snackbarOptions,
+                              },
+                            );
+                          } else {
+                            enqueueSnackbar("사용 가능한 아이디입니다.", {
+                              variant: "success",
+                              ...snackbarOptions,
+                            });
+                          }
                         }}
                       >
                         중복확인
@@ -701,7 +1011,10 @@ export default function UserManagement() {
                   <TextField
                     size="small"
                     fullWidth
-                    defaultValue={selectedUser?.name || ""}
+                    value={formData.userNm}
+                    onChange={(e) =>
+                      setFormData({ ...formData, userNm: e.target.value })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -733,19 +1046,29 @@ export default function UserManagement() {
                       control={
                         <Checkbox
                           size="small"
-                          checked={showPassword}
-                          onChange={(e) => setShowPassword(e.target.checked)}
+                          checked={formData.changePasswordYN === "Y"}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              changePasswordYN: e.target.checked ? "Y" : "N",
+                            })
+                          }
                         />
                       }
-                      label={<Typography variant="body2">보정</Typography>}
+                      label={<Typography variant="body2">변경</Typography>}
                       sx={{ m: 0 }}
                     />
                   </Stack>
                   <TextField
                     size="small"
                     fullWidth
-                    type={showPassword ? "text" : "password"}
-                    defaultValue="••••••"
+                    type="password"
+                    value={formData.userPassword}
+                    onChange={(e) =>
+                      setFormData({ ...formData, userPassword: e.target.value })
+                    }
+                    disabled={formData.changePasswordYN !== "Y"}
+                    placeholder="비밀번호"
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -768,6 +1091,15 @@ export default function UserManagement() {
                     size="small"
                     fullWidth
                     type="password"
+                    value={formData.userPasswordConfirm}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        userPasswordConfirm: e.target.value,
+                      })
+                    }
+                    disabled={formData.changePasswordYN !== "Y"}
+                    placeholder="비밀번호 확인"
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -793,7 +1125,10 @@ export default function UserManagement() {
                   <TextField
                     size="small"
                     fullWidth
-                    defaultValue="bayarchimeg"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -815,32 +1150,10 @@ export default function UserManagement() {
                   <TextField
                     size="small"
                     fullWidth
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-
-              {/* Row 4: Organization and Position */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 소속
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    defaultValue={selectedUser?.org || ""}
+                    value={formData.moblphon}
+                    onChange={(e) =>
+                      setFormData({ ...formData, moblphon: e.target.value })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -889,7 +1202,10 @@ export default function UserManagement() {
                     select
                     size="small"
                     fullWidth
-                    defaultValue=""
+                    value={formData.userLocat || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, userLocat: e.target.value })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -897,6 +1213,13 @@ export default function UserManagement() {
                     }}
                   >
                     <MenuItem value="">선택</MenuItem>
+                    {workLocationCodes.map((loc) =>
+                      loc.cmmnCode ? (
+                        <MenuItem key={loc.cmmnCode} value={loc.cmmnCode}>
+                          {loc.cmmnCodeNm || loc.cmmnCode}
+                        </MenuItem>
+                      ) : null,
+                    )}
                   </TextField>
                 </Box>
                 <Box sx={{ flex: 1 }}>
@@ -941,7 +1264,13 @@ export default function UserManagement() {
                     select
                     size="small"
                     fullWidth
-                    defaultValue={selectedUser?.role || ""}
+                    value={formData.userTyCode}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        userTyCode: e.target.value,
+                      })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
@@ -949,8 +1278,18 @@ export default function UserManagement() {
                     }}
                   >
                     <MenuItem value="">선택하세요</MenuItem>
-                    <MenuItem value="관리자">관리자</MenuItem>
-                    <MenuItem value="사용자">사용자</MenuItem>
+                    {roleCodes
+                      .filter(
+                        (role) =>
+                          role.cmmnCode !== "R002" && role.cmmnCode !== "R004",
+                      )
+                      .map((role) =>
+                        role.cmmnCode ? (
+                          <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
+                            {role.cmmnCodeNm}
+                          </MenuItem>
+                        ) : null,
+                      )}
                   </TextField>
                 </Box>
                 <Box sx={{ flex: 1 }}>
@@ -968,16 +1307,29 @@ export default function UserManagement() {
                     select
                     size="small"
                     fullWidth
-                    defaultValue={selectedUser?.status || ""}
+                    value={formData.userSttusCode}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        userSttusCode: e.target.value,
+                      })
+                    }
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
                       },
                     }}
                   >
-                    <MenuItem value="">선택하세요</MenuItem>
-                    <MenuItem value="사용중">사용중</MenuItem>
-                    <MenuItem value="중지">중지</MenuItem>
+                    <MenuItem value="ALL">
+                      {t("userManagement.options.all")}
+                    </MenuItem>
+                    {statusCodes.map((status) =>
+                      status.cmmnCode ? (
+                        <MenuItem key={status.cmmnCode} value={status.cmmnCode}>
+                          {status.cmmnCodeNm || status.cmmnCode}
+                        </MenuItem>
+                      ) : null,
+                    )}
                   </TextField>
                 </Box>
               </Stack>
@@ -1006,7 +1358,8 @@ export default function UserManagement() {
           </Button>
           <Button
             variant="contained"
-            onClick={() => setOpenDialog(false)}
+            onClick={handleSaveUser}
+            disabled={saveLoading}
             sx={{
               borderRadius: 1.5,
               textTransform: "none",
@@ -1015,7 +1368,7 @@ export default function UserManagement() {
               boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
             }}
           >
-            {t("userManagement.buttons.save")}
+            {saveLoading ? "저장 중..." : t("userManagement.buttons.save")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1028,8 +1381,9 @@ export default function UserManagement() {
       >
         <MenuItem
           onClick={() => {
-            setDialogMode("edit");
-            setOpenDialog(true);
+            if (selectedUser) {
+              handleEditUser(selectedUser);
+            }
             setAnchorEl(null);
           }}
         >

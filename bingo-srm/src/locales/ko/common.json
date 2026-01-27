@@ -4,13 +4,33 @@
     "password": "비밀번호"
   },
   "button": {
-    "login": "로그인"
+    "login": "로그인",
+    "cancel": "취소",
+    "update": "변경"
   },
   "title": {
     "login": "로그인"
   },
   "login": {
-    "subtitle": "다시 오신 것을 환영합니다! 계정에 로그인하세요."
+    "subtitle": "다시 오신 것을 환영합니다! 계정에 로그인하세요.",
+    "error": {
+      "passwordExpired": "비밀번호가 만료되었습니다. 비밀번호를 변경해주세요.",
+      "accountLocked": "계정이 잠겼습니다. 관리자에게 문의하세요.",
+      "accountWait": "계정 승인 대기 중입니다.",
+      "accountStop": "계정이 정지되었습니다. 관리자에게 문의하세요.",
+      "invalidCredentials": "아이디 또는 비밀번호가 올바르지 않습니다.",
+      "serverError": "서버 오류가 발생했습니다. 나중에 다시 시도해주세요.",
+      "passwordRequired": "비밀번호를 입력해주세요.",
+      "passwordMismatch": "비밀번호가 일치하지 않습니다.",
+      "passwordTooShort": "비밀번호는 최소 8자 이상이어야 합니다.",
+      "passwordUpdateFailed": "비밀번호 변경에 실패했습니다. 다시 시도해주세요."
+    },
+    "passwordExpired": {
+      "title": "비밀번호 만료",
+      "message": "비밀번호가 만료되었습니다. 새 비밀번호를 설정해주세요.",
+      "newPassword": "새 비밀번호",
+      "confirmPassword": "비밀번호 확인"
+    }
   },
   "userProfile": {
     "title": "사용자 정보 수정",

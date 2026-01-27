@@ -4,13 +4,33 @@
     "password": "Password"
   },
   "button": {
-    "login": "Login"
+    "login": "Login",
+    "cancel": "Cancel",
+    "update": "Update"
   },
   "title": {
     "login": "Login"
   },
   "login": {
-    "subtitle": "Welcome back! Please login to your account."
+    "subtitle": "Welcome back! Please login to your account.",
+    "error": {
+      "passwordExpired": "Your password has expired. Please change your password.",
+      "accountLocked": "Your account has been locked. Please contact the administrator.",
+      "accountWait": "Your account is awaiting approval.",
+      "accountStop": "Your account has been suspended. Please contact the administrator.",
+      "invalidCredentials": "Invalid username or password.",
+      "serverError": "A server error occurred. Please try again later.",
+      "passwordRequired": "Please enter both passwords.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters long.",
+      "passwordUpdateFailed": "Failed to update password. Please try again."
+    },
+    "passwordExpired": {
+      "title": "Password Expired",
+      "message": "Your password has expired. Please set a new password to continue.",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password"
+    }
   },
   "userProfile": {
     "title": "Edit User Profile",
