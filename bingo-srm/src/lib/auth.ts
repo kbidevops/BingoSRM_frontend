@@ -7,12 +7,17 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   authenticated: boolean;
-  userId?: string;
-  userTyCode?: string;
-  userSttusCode?: string;
-  status?: "OK" | "WAIT" | "STOP";
-  passwordExpired?: boolean;
-  locked?: boolean;
+  userTyCode: string;
+  userSttusCode: string;
+  status: "OK" | "WAIT" | "STOP";
+  passwordExpired: boolean;
+  userId: string;
+  accessToken: string;
+  tokenType: string; // e.g., "Bearer"
+  expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
+  assigned: AssignedMenu[];
 }
 
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
@@ -24,13 +29,20 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     body: JSON.stringify(credentials),
   });
 
-  const data = await response.json();
+  const data: LoginResponse = await response.json();
 
   if (data.authenticated) {
-    // Store user info in localStorage for subsequent API calls
+    // Store user info and tokens in localStorage for subsequent API calls
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("userTyCode", data.userTyCode);
     localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("tokenType", data.tokenType);
+    localStorage.setItem("expiresIn", data.expiresIn.toString());
+    localStorage.setItem("refreshExpiresIn", data.refreshExpiresIn.toString());
+    // Optionally store assigned if needed
+    localStorage.setItem("assigned", JSON.stringify(data.assigned));
   }
 
   return data;
@@ -75,6 +87,8 @@ export async function fetchAssignedMenus(
   // Get authentication info from localStorage or use provided role code
   const userId = localStorage.getItem("userId");
   const userTyCode = userRoleCode || localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   if (!userTyCode) {
     throw new Error("User role code is required to fetch assigned menus");
@@ -88,6 +102,9 @@ export async function fetchAssignedMenus(
         "Content-Type": "application/json",
         "X-User-Ty-Code": userTyCode,
         "X-User-Id": userId || "",
+        ...(accessToken
+          ? { Authorization: `${tokenType} ${accessToken}` }
+          : {}),
       },
     },
   );
@@ -129,6 +146,8 @@ export async function updateUserPassword(
     authHeaders?.userId || localStorage.getItem("userId") || userId;
   const userTyCode =
     authHeaders?.userTyCode || localStorage.getItem("userTyCode") || "";
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
     method: "PUT",
@@ -136,6 +155,7 @@ export async function updateUserPassword(
       "Content-Type": "application/json",
       "X-User-Id": currentUserId,
       "X-User-Ty-Code": userTyCode,
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
     },
     body: JSON.stringify({
       userPassword: passwordData.userPassword,
@@ -184,6 +204,8 @@ export async function updateUser(
   // Get authentication info from localStorage
   const currentUserId = localStorage.getItem("userId");
   const userTyCode = localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
     method: "PUT",
@@ -191,6 +213,7 @@ export async function updateUser(
       "Content-Type": "application/json",
       "X-User-Id": currentUserId || "",
       "X-User-Ty-Code": userTyCode || "",
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
     },
     body: JSON.stringify(userData),
   });
@@ -321,6 +344,8 @@ export async function fetchUserList(
   // Get authentication info from localStorage
   const userId = localStorage.getItem("userId");
   const userTyCode = localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(url, {
     method: "GET",
@@ -328,6 +353,7 @@ export async function fetchUserList(
       "Content-Type": "application/json",
       "X-User-Id": userId || "",
       "X-User-Ty-Code": userTyCode || "",
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
     },
   });
 
@@ -368,6 +394,8 @@ export async function fetchUserDetail(
   // Get authentication info from localStorage
   const currentUserId = localStorage.getItem("userId");
   const userTyCode = localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
     method: "GET",
@@ -375,6 +403,7 @@ export async function fetchUserDetail(
       "Content-Type": "application/json",
       "X-User-Id": currentUserId || "",
       "X-User-Ty-Code": userTyCode || "",
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
     },
   });
 
@@ -402,6 +431,8 @@ export async function fetchCodeTypes(codeType: string): Promise<CodeItem[]> {
   // Get authentication info from localStorage
   const userId = localStorage.getItem("userId");
   const userTyCode = localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(
     `${API_BASE_URL}/api/v1/code-types/${codeType}/codes`,
@@ -411,6 +442,9 @@ export async function fetchCodeTypes(codeType: string): Promise<CodeItem[]> {
         "Content-Type": "application/json",
         "X-User-Id": userId || "",
         "X-User-Ty-Code": userTyCode || "",
+        ...(accessToken
+          ? { Authorization: `${tokenType} ${accessToken}` }
+          : {}),
       },
     },
   );
