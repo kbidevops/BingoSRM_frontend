@@ -16,11 +16,7 @@ import {
   Collapse,
   IconButton,
 } from "@mui/material";
-import {
-  fetchProgramAccessAll,
-  updateProgramAccess,
-  fetchAssignedMenus,
-} from "@/src/lib/auth";
+import { fetchProgramAccessAll, updateProgramAccess } from "@/src/lib/auth";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CheckIcon from "@mui/icons-material/Check";
@@ -40,6 +36,7 @@ interface MenuNode {
   name: string;
   isFolder?: boolean;
   children?: MenuNode[];
+  checked?: boolean;
 }
 
 const roles: Role[] = [
@@ -51,44 +48,29 @@ const roles: Role[] = [
 
 const menuTree: MenuNode[] = [
   {
-    id: "itsm",
-    name: "BingoSRM",
+    id: "basic-info",
+    name: "기준정보",
     isFolder: true,
+    checked: false,
     children: [
-      {
-        id: "basic-info",
-        name: "기준정보",
-        isFolder: true,
-        children: [
-          { id: "user-mgmt", name: "사용자관리" },
-          { id: "system-mgr", name: "시스템담당자관리" },
-          { id: "program-mgmt", name: "프로그램관리" },
-          { id: "program-auth", name: "프로그램접근관리" },
-        ],
-      },
-      { id: "member-info", name: "회원정보" },
-      {
-        id: "member-join",
-        name: "회원가입",
-        isFolder: true,
-        children: [
-          { id: "signup", name: "회원가입" },
-          { id: "signup-info", name: "가입정보" },
-        ],
-      },
+      { id: "user-mgmt", name: "사용자관리", checked: false },
+      { id: "system-mgr", name: "시스템담당자관리", checked: false },
+      { id: "program-mgmt", name: "프로그램관리", checked: false },
+      { id: "program-auth", name: "프로그램접근관리", checked: false },
     ],
   },
   {
     id: "sr",
     name: "SR관리",
     isFolder: true,
+    checked: false,
     children: [
-      { id: "sr-request", name: "SR요청" },
-      { id: "sr-receive", name: "SR접수" },
-      { id: "sr-process", name: "SR처리" },
-      { id: "sr-verify", name: "SR검증" },
-      { id: "sr-complete", name: "SR완료" },
-      { id: "sr-eval", name: "SR평가" },
+      { id: "sr-request", name: "SR요청", checked: false },
+      { id: "sr-receive", name: "SR접수", checked: false },
+      { id: "sr-process", name: "SR처리", checked: false },
+      { id: "sr-verify", name: "SR검증", checked: false },
+      { id: "sr-complete", name: "SR완료", checked: false },
+      { id: "sr-eval", name: "SR평가", checked: false },
     ],
   },
 ];
@@ -251,8 +233,12 @@ export default function ProgramAuth() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
     new Set(["itsm", "basic-info", "member-join"]),
   );
+  const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
   const handleRoleSelect = (role: Role) => {
+    // Prevent duplicate requests for the same role
+    if (loadingRole === role.id) return;
+
     setSelectedRole(role);
     // Load permissions for this role
     loadProgramAccessForRole(role.id).catch((err) => {
@@ -266,80 +252,129 @@ export default function ProgramAuth() {
     });
   };
 
-  // Load all programs and assigned programs for a given role/authority code
+  // Load all programs and derive assigned programs for a given role/authority code
+  // Reuse the `program-access?authorCode=...` response and map entries to our tree.
   const loadProgramAccessForRole = async (authorCode: string) => {
-    // fetch all programs (with access info)
-    const all = await fetchProgramAccessAll(authorCode);
-    // fetch assigned-only list
-    const assigned = await fetchAssignedMenus(authorCode);
+    if (loadingRole === authorCode) return;
+    setLoadingRole(authorCode);
+    try {
+      const all = await fetchProgramAccessAll(authorCode);
 
-    // Build set of node ids to check based on assigned programs and legacy route mapping
-    const assignedNodeIds = new Set<string>();
+      // Debug: inspect fetched payload and basic counts
+      const yCount = all.filter((p) => (p as any).menuIndictYn === "Y").length;
+      const nCount = all.filter((p) => (p as any).menuIndictYn === "N").length;
+      console.debug("[program-auth] loadProgramAccessForRole", {
+        authorCode,
+        total: all.length,
+        menuIndictY: yCount,
+        menuIndictN: nCount,
+      });
+      console.debug("[program-auth] sample rows", all.slice(0, 6));
 
-    // helper to find node id by display name
-    const findNodeIdByName = (
-      nodes: MenuNode[],
-      name: string,
-    ): string | null => {
-      for (const node of nodes) {
-        if (node.name === name) return node.id;
-        if (node.children) {
-          const found = findNodeIdByName(node.children, name);
-          if (found) return found;
+      const assignedNodeIds = new Set<string>();
+      const explicitUncheckIds = new Set<string>();
+
+      const findNodeIdByName = (
+        nodes: MenuNode[],
+        name: string,
+      ): string | null => {
+        for (const node of nodes) {
+          if (node.name === name) return node.id;
+          if (node.children) {
+            const found = findNodeIdByName(node.children, name);
+            if (found) return found;
+          }
         }
-      }
-      return null;
-    };
+        return null;
+      };
 
-    // Prefer mapping assigned entries by legacy URI -> route -> nodeId
-    assigned.forEach((it) => {
-      const uri =
-        (it as any).progrmUri ||
-        (it as any).programUri ||
-        (it as any).menuUri ||
-        "";
-      if (uri && legacyToNextRoute[uri]) {
-        const nextRoute = legacyToNextRoute[uri];
-        const nodeId = routeToNodeId[nextRoute];
-        if (nodeId) assignedNodeIds.add(nodeId);
-      } else if ((it as any).progrmNm) {
-        const nodeId = findNodeIdByName(
-          menuTree,
-          (it as any).progrmNm as string,
-        );
-        if (nodeId) assignedNodeIds.add(nodeId);
-      }
-    });
+      // First filter backend list to only rows with a legacy URI mapping (remove unnecessary items)
+      const relevant = all.filter((p) => {
+        const uri = (p as any).progrmUri || (p as any).programUri;
+        return legacyToNextRoute[uri];
+      });
 
-    // Also scan the full program list in case it contains URIs or assignedYn flags
-    all.forEach((p) => {
-      const uri = (p as any).progrmUri || (p as any).programUri || "";
-      if (uri && legacyToNextRoute[uri]) {
-        const nodeId = routeToNodeId[legacyToNextRoute[uri]];
-        if (nodeId) assignedNodeIds.add(nodeId);
-      }
-      if ((p as any).assignedYn === "Y" || (p as any).assignedYn === true) {
-        // try by name
-        const name = (p as any).progrmNm || (p as any).programNm;
-        if (name) {
-          const nodeId = findNodeIdByName(menuTree, name as string);
+      console.debug(
+        "[program-auth] relevant (has legacy mapping) count",
+        relevant.length,
+      );
+
+      // Then apply strict URI-only mapping on the filtered set
+      relevant.forEach((p) => {
+        const uri = (p as any).progrmUri;
+        console.debug("[program-auth] processing", uri);
+        console.debug("p.menuIndictYn: ", p.menuIndictYn);
+        if ((p as any).menuIndictYn === "Y") {
+          const nodeId = routeToNodeId[legacyToNextRoute[uri]];
           if (nodeId) assignedNodeIds.add(nodeId);
-        }
-      }
-    });
-
-    // Fallback: if nothing mapped, attempt to use progrmSn or program name from assigned
-    if (assignedNodeIds.size === 0) {
-      assigned.forEach((it) => {
-        const name = (it as any).progrmNm || (it as any).programNm;
-        if (name) {
-          const nodeId = findNodeIdByName(menuTree, name as string);
-          if (nodeId) assignedNodeIds.add(nodeId);
+        } else if ((p as any).menuIndictYn === "N") {
+          const nodeId = routeToNodeId[legacyToNextRoute[uri]];
+          if (nodeId) explicitUncheckIds.add(nodeId);
         }
       });
-    }
 
-    setCheckedItems(assignedNodeIds);
+      console.debug(
+        "[program-auth] mapped assigned (before uncheck)",
+        Array.from(assignedNodeIds),
+      );
+      console.debug(
+        "[program-auth] mapped explicit unchecks",
+        Array.from(explicitUncheckIds),
+      );
+
+      // Final checked set = assigned - explicit unchecks
+      explicitUncheckIds.forEach((id) => assignedNodeIds.delete(id));
+
+      // Ensure parent folder nodes are also checked when a child is assigned.
+      const getPathToNode = (targetId: string): string[] => {
+        const path: string[] = [];
+        const dfs = (nodes: MenuNode[], parents: string[]): boolean => {
+          for (const n of nodes) {
+            const next = [...parents, n.id];
+            if (n.id === targetId) {
+              path.push(...next);
+              return true;
+            }
+            if (n.children) {
+              if (dfs(n.children, next)) return true;
+            }
+          }
+          return false;
+        };
+        dfs(menuTree, []);
+        return path;
+      };
+
+      const assignedArray = Array.from(assignedNodeIds);
+      const ancestorIds = new Set<string>();
+      assignedArray.forEach((id) => {
+        const path = getPathToNode(id);
+        path.forEach((pid) => ancestorIds.add(pid));
+      });
+
+      // Merge ancestors into assigned set
+      ancestorIds.forEach((id) => assignedNodeIds.add(id));
+
+      // Expand ancestor folders so checked items are visible
+      setExpandedItems((prev) => {
+        const newSet = new Set(prev);
+        ancestorIds.forEach((id) => newSet.add(id));
+        return newSet;
+      });
+
+      // Update `checked` property on the tree nodes for clarity/use elsewhere
+      const updateCheckedOnTree = (nodes: MenuNode[]) => {
+        for (const n of nodes) {
+          n.checked = assignedNodeIds.has(n.id);
+          if (n.children) updateCheckedOnTree(n.children);
+        }
+      };
+      updateCheckedOnTree(menuTree);
+
+      setCheckedItems(assignedNodeIds);
+    } finally {
+      setLoadingRole(null);
+    }
   };
 
   // Helper function to get all descendant IDs
@@ -380,6 +415,12 @@ export default function ProgramAuth() {
         // Check this node and all descendants
         allIds.forEach((itemId) => newSet.add(itemId));
       }
+
+      // Keep `menuTree` nodes' checked property in sync for UI clarity
+      allIds.forEach((itemId) => {
+        const n = findNodeById(menuTree, itemId);
+        if (n) n.checked = newSet.has(itemId);
+      });
       return newSet;
     });
   };

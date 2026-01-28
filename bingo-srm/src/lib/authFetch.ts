@@ -30,10 +30,34 @@ export async function authFetch(
   }
 
   // Attach token
+  // Avoid including unnecessary headers that trigger CORS preflights.
+  // In particular, don't send `Content-Type: application/json` on GET/HEAD requests.
+  const method = (options.method || "GET").toString().toUpperCase();
+  const incomingHeaders: Record<string, string> = {
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  if (
+    (method === "GET" || method === "HEAD") &&
+    incomingHeaders["Content-Type"]
+  ) {
+    // content-type on GET/HEAD often unnecessary and makes request non-simple
+    delete incomingHeaders["Content-Type"];
+    delete incomingHeaders["content-type"];
+  }
+
   const headers = {
-    ...(options.headers || {}),
+    ...incomingHeaders,
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   };
+
+  // Debug: warn when a preflight is likely (Authorization or non-simple content-type)
+  if (headers.Authorization) {
+    // Authorization header makes the request non-simple and will trigger a preflight
+    console.debug(
+      "[authFetch] Authorization present — browser will perform preflight OPTIONS request",
+    );
+  }
 
   let response = await fetch(url, { ...options, headers });
 
