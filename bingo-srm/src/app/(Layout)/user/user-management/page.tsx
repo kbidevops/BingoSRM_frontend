@@ -39,7 +39,12 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { DataGrid, GridColDef, GridPaginationModel } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridPaginationModel,
+  GridSelectionModel,
+} from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -99,6 +104,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [selectionModel, setSelectionModel] = useState<GridSelectionModel>([]);
   const [statusCodes, setStatusCodes] = useState<CodeItem[]>([]);
   const [roleCodes, setRoleCodes] = useState<CodeItem[]>([]);
 
@@ -345,14 +351,6 @@ export default function UserManagement() {
 
   const columns: GridColDef[] = [
     {
-      field: "select",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      renderHeader: () => <Checkbox size="small" />,
-      renderCell: () => <Checkbox size="small" />,
-    },
-    {
       field: "userId",
       headerName: t("userManagement.fields.userId"),
       flex: 1,
@@ -360,6 +358,7 @@ export default function UserManagement() {
       align: "center",
       headerAlign: "center",
     },
+
     {
       field: "name",
       headerName: t("userManagement.fields.name"),
@@ -907,7 +906,9 @@ export default function UserManagement() {
           paginationMode="server"
           loading={loading}
           disableRowSelectionOnClick
-          checkboxSelection={false}
+          checkboxSelection={true}
+          selectionModel={selectionModel}
+          onSelectionModelChange={(newModel) => setSelectionModel(newModel)}
           disableColumnMenu
         />
       </Box>

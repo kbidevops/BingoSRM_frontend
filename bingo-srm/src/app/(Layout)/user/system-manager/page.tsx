@@ -110,10 +110,59 @@ export default function SystemManager() {
       setManagers(mapped.length ? mapped : DEFAULT_MANAGERS);
       if (mapped.length) {
         setSelectedManager(mapped[0]);
-        setSelectedPermissions(mapped[0].permissions || []);
+        // prefer a fresh load of assigned systems from server for accuracy
+        fetchAssignedSystems(mapped[0].userId).catch(() =>
+          setSelectedPermissions(mapped[0].permissions || []),
+        );
       }
     } catch (err) {
       console.error("Failed to load system managers", err);
+    }
+  };
+
+  // Fetch assigned systems for a given userId and map them to our permission labels
+  const fetchAssignedSystems = async (userId: string) => {
+    try {
+      const url = `/api/v1/sys-chargers/assigned?userId=${encodeURIComponent(
+        userId,
+      )}`;
+      const res = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`,
+        },
+      });
+      if (!res.ok) {
+        console.warn("Failed to fetch assigned systems", res.status);
+        setSelectedPermissions([]);
+        return;
+      }
+      const json = await res.json();
+      // normalize possible response shapes
+      let items: any[] = [];
+      if (Array.isArray(json)) items = json;
+      else if (Array.isArray(json.resultList)) items = json.resultList;
+      else if (Array.isArray(json.data)) items = json.data;
+
+      const assignedNames = items
+        .map((it) => {
+          if (!it) return null;
+          if (typeof it === "string") return it;
+          return (
+            it.systemName || it.systemNm || it.name || it.menuNm || it.label
+          );
+        })
+        .filter(Boolean) as string[];
+
+      // keep only permission labels that exist in our known systemPermissions
+      const matched = systemPermissions
+        .map((p) => p.label)
+        .filter((lbl) => assignedNames.includes(lbl));
+
+      setSelectedPermissions(matched);
+    } catch (err) {
+      console.error("Error fetching assigned systems", err);
+      setSelectedPermissions([]);
     }
   };
 
@@ -123,7 +172,10 @@ export default function SystemManager() {
 
   const handleManagerSelect = (manager: SystemManager) => {
     setSelectedManager(manager);
-    setSelectedPermissions(manager.permissions);
+    // load assigned systems from server and update checked items
+    fetchAssignedSystems(manager.userId).catch(() =>
+      setSelectedPermissions(manager.permissions || []),
+    );
   };
 
   const handlePermissionToggle = (permission: string) => {
