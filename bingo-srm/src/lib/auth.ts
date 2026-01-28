@@ -41,6 +41,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     localStorage.setItem("tokenType", data.tokenType);
     localStorage.setItem("expiresIn", data.expiresIn.toString());
     localStorage.setItem("refreshExpiresIn", data.refreshExpiresIn.toString());
+    localStorage.setItem("tokenSetTime", Date.now().toString());
     // Optionally store assigned if needed
     localStorage.setItem("assigned", JSON.stringify(data.assigned));
   }
@@ -365,6 +366,15 @@ export async function fetchUserList(
   return data;
 }
 
+// Convenience wrapper to fetch users by role (e.g., system managers)
+export async function fetchUsersByRole(
+  userTyCode: string,
+  pageIndex = 1,
+  recordCountPerPage = 100,
+): Promise<UserListResponse> {
+  return fetchUserList({ pageIndex, recordCountPerPage, userTyCode });
+}
+
 // Get specific user
 export interface UserDetailResponse {
   userId: string;
@@ -413,6 +423,41 @@ export async function fetchUserDetail(
 
   const data: UserDetailResponse = await response.json();
   return data;
+}
+
+// Soft-delete user (backend maps DELETE to status update)
+export async function deleteUser(
+  userId: string,
+): Promise<{ success: boolean; message?: string }> {
+  const currentUserId = localStorage.getItem("userId") || "";
+  const userTyCode = localStorage.getItem("userTyCode") || "";
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Id": currentUserId,
+      "X-User-Ty-Code": userTyCode,
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("User delete failed:", response.status, errorText);
+    throw new Error(
+      errorText || `Failed to delete user: ${response.statusText}`,
+    );
+  }
+
+  if (response.status === 204) {
+    return { success: true };
+  }
+
+  const data = await response.json();
+  return { success: true, message: data.message };
 }
 
 // Code Types

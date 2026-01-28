@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import useLocale from "@/src/app/useLocale";
 
@@ -18,6 +18,11 @@ import {
   FormControlLabel,
   Grid,
 } from "@mui/material";
+import {
+  fetchUsersByRole,
+  fetchCodeTypes,
+  type UserData,
+} from "@/src/lib/auth";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckIcon from "@mui/icons-material/Check";
@@ -32,7 +37,7 @@ interface SystemManager {
   permissions: string[];
 }
 
-const systemManagers: SystemManager[] = [
+const DEFAULT_MANAGERS: SystemManager[] = [
   {
     id: 1,
     userId: "admin2",
@@ -50,30 +55,6 @@ const systemManagers: SystemManager[] = [
     role: "담당",
     avatarColor: "#8BC34A",
     permissions: ["정보/자료 요청", "신규 개발"],
-  },
-  {
-    id: 3,
-    userId: "abcd",
-    userName: "홍길동",
-    displayName: "홍길동",
-    role: "담당",
-    avatarColor: "#00BCD4",
-    permissions: [
-      "단순/사용법 문의",
-      "업무/직업 검토",
-      "정보/자료 요청",
-      "기능 복가",
-      "신규 개발",
-    ],
-  },
-  {
-    id: 4,
-    userId: "qwer",
-    userName: "이순신",
-    displayName: "이순신",
-    role: "담당",
-    avatarColor: "#00BCD4",
-    permissions: ["단순/사용법 문의", "업무/직업 검토"],
   },
 ];
 
@@ -100,13 +81,45 @@ export default function SystemManager() {
   const { t } = useTranslation();
   const locale = useLocale();
 
+  const [managers, setManagers] = useState<SystemManager[]>(DEFAULT_MANAGERS);
   const [selectedManager, setSelectedManager] = useState<SystemManager | null>(
-    systemManagers[1],
+    DEFAULT_MANAGERS[0] || null,
   );
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(
-    systemManagers[1].permissions,
+    DEFAULT_MANAGERS[0]?.permissions || [],
   );
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch role codes and then system manager users from server
+  const fetchManagers = async () => {
+    try {
+      const codes = await fetchCodeTypes("R0");
+      const sysRole = codes.find((r) => r.cmmnCodeNm === "시스템관리자");
+      const roleCode = sysRole?.cmmnCode;
+      if (!roleCode) return;
+      const resp = await fetchUsersByRole(roleCode, 1, 100);
+      const mapped = resp.resultList.map((u: UserData, idx: number) => ({
+        id: idx + 1,
+        userId: u.userId,
+        userName: u.userId,
+        displayName: u.userNm || u.userId,
+        role: u.userTyCodeNm || "",
+        avatarColor: "",
+        permissions: u.assigned ? (u.assigned as any).permissions || [] : [],
+      }));
+      setManagers(mapped.length ? mapped : DEFAULT_MANAGERS);
+      if (mapped.length) {
+        setSelectedManager(mapped[0]);
+        setSelectedPermissions(mapped[0].permissions || []);
+      }
+    } catch (err) {
+      console.error("Failed to load system managers", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchManagers();
+  }, []);
 
   const handleManagerSelect = (manager: SystemManager) => {
     setSelectedManager(manager);
@@ -130,11 +143,14 @@ export default function SystemManager() {
     // API call to save permissions
   };
 
-  const filteredManagers = systemManagers.filter(
-    (manager) =>
-      manager.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      manager.displayName.includes(searchQuery),
-  );
+  const filteredManagers = managers.filter((manager) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      manager.userId.toLowerCase().includes(q) ||
+      (manager.displayName || "").toLowerCase().includes(q)
+    );
+  });
 
   return (
     <Stack
@@ -206,6 +222,7 @@ export default function SystemManager() {
                   variant="contained"
                   size="small"
                   startIcon={<RefreshIcon />}
+                  onClick={() => fetchManagers()}
                   sx={{
                     minWidth: 100,
                     borderRadius: 1.5,

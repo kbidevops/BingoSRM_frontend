@@ -114,7 +114,11 @@
       "createTitle": "사용자 등록",
       "editTitle": "사용자 수정",
       "deleteTitle": "사용자 삭제",
-      "deleteConfirm": "\"{{name}}\" 사용자를 삭제하시겠습니까?"
+      "deleteConfirm": "\"{{name}}\" 사용자를 삭제하시겠습니까?",
+      "deleteWarning": "삭제된 데이터는 복구할 수 없습니다."
+    },
+    "messages": {
+      "deleteSuccess": "사용자 삭제가 완료되었습니다."
     },
     "roles": {
       "admin": "관리자",

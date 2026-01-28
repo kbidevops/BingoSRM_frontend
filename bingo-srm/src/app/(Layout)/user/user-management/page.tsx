@@ -9,6 +9,7 @@ import {
   fetchCodeTypes,
   fetchUserDetail,
   updateUser,
+  deleteUser,
   type UserData,
   type CodeItem,
   type UserDetailResponse,
@@ -47,6 +48,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
@@ -252,8 +254,8 @@ export default function UserManagement() {
         psitn: userDetail.psitn || "",
         clsf: userDetail.clsf || "",
         moblphon: userDetail.moblphon || "",
-        userTyCode: userDetail.userTyCode,
-        userSttusCode: userDetail.userSttusCode,
+        userTyCode: userDetail.userTyCode || "",
+        userSttusCode: userDetail.userSttusCode || "",
         acntReqstResn: userDetail.acntReqstResn || "",
         changePasswordYN: "N",
         userLocat: userDetail.userLocat || "",
@@ -443,6 +445,11 @@ export default function UserManagement() {
       renderCell: (params) => (
         <IconButton
           size="small"
+          id={`actions-button-${params.row.id}`}
+          aria-label={t("userManagement.buttons.moreActions")}
+          aria-haspopup="true"
+          aria-controls={anchorEl ? "user-actions-menu" : undefined}
+          aria-expanded={Boolean(anchorEl)}
           onClick={(e) => {
             setAnchorEl(e.currentTarget);
             setSelectedUser(params.row);
@@ -531,6 +538,10 @@ export default function UserManagement() {
           <IconButton
             size="small"
             onClick={() => setSearchExpanded(!searchExpanded)}
+            aria-label={t("userManagement.searchToggle")}
+            aria-controls="search-conditions"
+            aria-expanded={searchExpanded}
+            id="search-toggle-button"
             sx={{
               transition: "transform 0.2s",
               transform: searchExpanded ? "rotate(0deg)" : "rotate(180deg)",
@@ -540,9 +551,9 @@ export default function UserManagement() {
           </IconButton>
         </Stack>
         {searchExpanded && (
-          <Stack spacing={1.5}>
+          <Stack spacing={1.5} id="search-conditions" aria-live="polite">
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={1.5}
               flexWrap="wrap"
               alignItems="center"
@@ -553,7 +564,7 @@ export default function UserManagement() {
                 value={searchUserId}
                 onChange={(e) => setSearchUserId(e.target.value)}
                 sx={{
-                  width: "180px",
+                  width: { xs: "100%", sm: "180px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -578,7 +589,7 @@ export default function UserManagement() {
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
                 sx={{
-                  width: "180px",
+                  width: { xs: "100%", sm: "180px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -602,7 +613,7 @@ export default function UserManagement() {
                 label={t("userManagement.fields.role")}
                 size="small"
                 sx={{
-                  width: "140px",
+                  width: { xs: "100%", sm: "140px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -644,7 +655,7 @@ export default function UserManagement() {
                 value={searchOrg}
                 onChange={(e) => setSearchOrg(e.target.value)}
                 sx={{
-                  width: "180px",
+                  width: { xs: "100%", sm: "180px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -669,7 +680,7 @@ export default function UserManagement() {
                 value={searchPosition}
                 onChange={(e) => setSearchPosition(e.target.value)}
                 sx={{
-                  width: "180px",
+                  width: { xs: "100%", sm: "180px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -693,7 +704,7 @@ export default function UserManagement() {
                 label={t("userManagement.fields.status")}
                 size="small"
                 sx={{
-                  width: "140px",
+                  width: { xs: "100%", sm: "140px" },
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "background.default",
                     height: "36px",
@@ -726,10 +737,10 @@ export default function UserManagement() {
               </TextField>
             </Stack>
             <Stack
-              direction="row"
-              justifyContent="flex-end"
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent={{ xs: "flex-start", sm: "flex-end" }}
               spacing={1}
-              sx={{ pt: 0.5 }}
+              sx={{ pt: 0.5, width: "100%" }}
             >
               <Button
                 variant="outlined"
@@ -746,6 +757,9 @@ export default function UserManagement() {
                   fontWeight: 500,
                   borderWidth: 1.5,
                   transition: "all 0.2s",
+                  alignSelf: { xs: "stretch", sm: "auto" },
+                  justifyContent: "center",
+                  width: { xs: "100%", sm: "auto" },
                   "&:hover": {
                     borderWidth: 1.5,
                     transform: "translateY(-1px)",
@@ -770,6 +784,9 @@ export default function UserManagement() {
                   fontWeight: 500,
                   boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.1)",
                   transition: "all 0.2s",
+                  alignSelf: { xs: "stretch", sm: "auto" },
+                  justifyContent: "center",
+                  width: { xs: "100%", sm: "auto" },
                   "&:hover": {
                     transform: "translateY(-1px)",
                     boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.15)",
@@ -838,7 +855,8 @@ export default function UserManagement() {
             display: "flex",
             alignItems: "center",
             "&:focus, &:focus-within": {
-              outline: "none",
+              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: "-2px",
             },
           },
           "& .MuiDataGrid-columnHeaders": {
@@ -851,7 +869,8 @@ export default function UserManagement() {
           },
           "& .MuiDataGrid-columnHeader": {
             "&:focus, &:focus-within": {
-              outline: "none",
+              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: "-2px",
             },
           },
           "& .MuiDataGrid-row": {
@@ -877,6 +896,7 @@ export default function UserManagement() {
         }}
       >
         <DataGrid
+          aria-label={t("userManagement.dataGrid")}
           rows={users}
           columns={columns}
           pagination
@@ -896,6 +916,7 @@ export default function UserManagement() {
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
+        aria-labelledby="user-dialog-title"
         maxWidth="md"
         fullWidth
         PaperProps={{
@@ -912,6 +933,7 @@ export default function UserManagement() {
             borderColor: "divider",
             pb: 2,
           }}
+          id="user-dialog-title"
         >
           <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
             {dialogMode === "create"
@@ -954,6 +976,7 @@ export default function UserManagement() {
                       <Button
                         variant="outlined"
                         size="small"
+                        aria-label={t("userManagement.buttons.checkDuplicate")}
                         sx={{
                           whiteSpace: "nowrap",
                           borderRadius: 1.5,
@@ -1375,9 +1398,13 @@ export default function UserManagement() {
 
       {/* Actions Menu */}
       <Menu
+        id="user-actions-menu"
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={() => setAnchorEl(null)}
+        MenuListProps={{
+          "aria-label": t("userManagement.buttons.actions"),
+        }}
       >
         <MenuItem
           onClick={() => {
@@ -1405,41 +1432,58 @@ export default function UserManagement() {
         </MenuItem>
       </Menu>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog (styled) */}
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
+        aria-labelledby="delete-confirm-title"
         PaperProps={{
           sx: {
             borderRadius: 2,
+            width: { xs: "90%", sm: 420 },
             boxShadow:
               "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            bgcolor: "background.paper",
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            fontWeight: 600,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            pb: 2,
-          }}
-        >
-          {t("userManagement.dialog.deleteTitle")}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Typography>
-            {t("userManagement.dialog.deleteConfirm", {
-              name: selectedUser?.name,
-            })}
+        <DialogContent sx={{ pt: 3, px: 4, pb: 2, textAlign: "center" }}>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              bgcolor: (theme) => theme.palette.error.main,
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 2,
+            }}
+            aria-hidden
+          >
+            <ErrorOutlineIcon fontSize="large" />
+          </Box>
+
+          <Typography
+            id="delete-confirm-title"
+            variant="h6"
+            component="div"
+            sx={{ fontWeight: 700, mb: 1 }}
+          >
+            {t("userManagement.dialog.deleteTitle") || "정말 삭제하시겠습니까?"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+            {t("userManagement.dialog.deleteWarning") ||
+              "삭제된 데이터는 복구할 수 없습니다."}
           </Typography>
         </DialogContent>
         <DialogActions
           sx={{
-            p: 2.5,
-            gap: 1,
-            borderTop: "1px solid",
-            borderColor: "divider",
+            p: 3,
+            gap: 2,
+            justifyContent: "space-between",
           }}
         >
           <Button
@@ -1449,26 +1493,43 @@ export default function UserManagement() {
               textTransform: "none",
               px: 3,
               fontWeight: 500,
+              color: "text.primary",
             }}
+            aria-label={t("userManagement.buttons.cancel")}
           >
             {t("userManagement.buttons.cancel")}
           </Button>
           <Button
             variant="contained"
             color="error"
-            onClick={() => {
-              // TODO: Implement delete logic here
-              console.log("Deleting user:", selectedUser);
-              setDeleteConfirmOpen(false);
-              setSelectedUser(null);
+            onClick={async () => {
+              if (!selectedUser) return;
+              try {
+                await deleteUser(selectedUser.userId);
+                enqueueSnackbar(
+                  t("userManagement.messages.deleteSuccess") ||
+                    "사용자 삭제가 완료되었습니다.",
+                  { variant: "success", ...snackbarOptions },
+                );
+                setDeleteConfirmOpen(false);
+                setSelectedUser(null);
+                loadUsers();
+              } catch (err) {
+                console.error("Failed to delete user:", err);
+                enqueueSnackbar("사용자 삭제에 실패했습니다.", {
+                  variant: "error",
+                  ...snackbarOptions,
+                });
+              }
             }}
             sx={{
               borderRadius: 1.5,
               textTransform: "none",
               px: 3,
-              fontWeight: 500,
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              fontWeight: 600,
+              boxShadow: "0 6px 12px rgba(0,0,0,0.08)",
             }}
+            aria-label={t("userManagement.buttons.delete")}
           >
             {t("userManagement.buttons.delete")}
           </Button>

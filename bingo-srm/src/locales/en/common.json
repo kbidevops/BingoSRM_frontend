@@ -114,7 +114,11 @@
       "createTitle": "Register User",
       "editTitle": "Edit User",
       "deleteTitle": "Delete User",
-      "deleteConfirm": "Are you sure you want to delete user \"{{name}}\"?"
+      "deleteConfirm": "Are you sure you want to delete user \"{{name}}\"?",
+      "deleteWarning": "Deleted data cannot be recovered."
+    },
+    "messages": {
+      "deleteSuccess": "User deleted successfully."
     },
     "roles": {
       "admin": "Admin",
