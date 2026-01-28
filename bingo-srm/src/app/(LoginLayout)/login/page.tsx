@@ -8,6 +8,7 @@ import LoginForm from "./LoginForm";
 
 // MUI
 import { Box, Stack, Typography, keyframes } from "@mui/material";
+import { useEffect, useState } from "react";
 
 const imageZoomIn = keyframes`
   from {
@@ -32,6 +33,13 @@ const shimmer = keyframes`
 export default function LoginPage() {
   const { resolvedTheme } = useNextTheme();
   const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid rendering theme-dependent variations on server to prevent hydration
+  // mismatch — wait until mounted to show client-resolved theme assets.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Stack direction="row" component="main" height="100vh">
@@ -43,7 +51,7 @@ export default function LoginPage() {
         alignItems="center"
         height="100%"
         sx={{
-          background: isDark
+          background: (mounted ? isDark : true)
             ? "linear-gradient(135deg, rgba(26, 32, 44, 0.95) 0%, rgba(45, 55, 72, 0.95) 100%)"
             : "linear-gradient(135deg, rgba(247, 250, 252, 0.95) 0%, rgba(237, 242, 247, 0.95) 100%)",
           position: "relative",
@@ -177,10 +185,13 @@ export default function LoginPage() {
             padding: "4px 8px",
             borderRadius: "4px",
           }}
+          suppressHydrationWarning
         >
-          {isDark
-            ? "Oahu, Hawaii by Patrick Langwallner"
-            : "Brezovica, Serbia by Filip Zrnzević"}
+          {mounted
+            ? isDark
+              ? "Oahu, Hawaii by Patrick Langwallner"
+              : "Brezovica, Serbia by Filip Zrnzević"
+            : "Oahu, Hawaii by Patrick Langwallner"}
         </Typography>
 
         <Box
@@ -194,7 +205,13 @@ export default function LoginPage() {
           }}
         >
           <Image
-            src={isDark ? "/login-dark.jpg" : "/login-light.jpg"}
+            src={
+              mounted
+                ? isDark
+                  ? "/login-dark.jpg"
+                  : "/login-light.jpg"
+                : "/login-dark.jpg"
+            }
             alt="Login background"
             fill
             priority

@@ -1,4 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090";
+import { authFetch } from "./authFetch";
 
 export interface LoginRequest {
   userId: string;
@@ -95,27 +96,79 @@ export async function fetchAssignedMenus(
     throw new Error("User role code is required to fetch assigned menus");
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/program-access/${userTyCode}/assigned`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Ty-Code": userTyCode,
-        "X-User-Id": userId || "",
-        ...(accessToken
-          ? { Authorization: `${tokenType} ${accessToken}` }
-          : {}),
-      },
+  const url = `${API_BASE_URL}/api/v1/program-access/${userTyCode}/assigned`;
+  const res = await authFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Ty-Code": userTyCode,
+      "X-User-Id": userId || "",
     },
-  );
+  });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch assigned menus: ${response.statusText}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch assigned menus: ${res.statusText}`);
   }
 
-  const assignedMenus: AssignedMenu[] = await response.json();
+  const assignedMenus: AssignedMenu[] = await res.json();
   return assignedMenus;
+}
+
+// Program access: list all programs with access info for an authority
+export interface ProgramAccessItem {
+  programId: string;
+  programNm?: string;
+  assignedYn?: string | boolean;
+  [key: string]: unknown;
+}
+
+export async function fetchProgramAccessAll(
+  authorCode: string,
+): Promise<ProgramAccessItem[]> {
+  const url = `${API_BASE_URL}/api/v1/program-access?authorCode=${encodeURIComponent(
+    authorCode,
+  )}`;
+  const res = await authFetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch program access: ${res.statusText}`);
+  }
+  const data = await res.json();
+  // support either direct array or wrapped resultList
+  if (Array.isArray(data)) return data as ProgramAccessItem[];
+  if (Array.isArray((data as any).resultList)) return (data as any).resultList;
+  if (Array.isArray((data as any).data)) return (data as any).data;
+  return [];
+}
+
+// Update assigned programs for an authority
+export async function updateProgramAccess(
+  authorCode: string,
+  assignedProgramIds: string[],
+): Promise<{ success: boolean; message?: string } | void> {
+  const url = `${API_BASE_URL}/api/v1/program-access/${encodeURIComponent(
+    authorCode,
+  )}`;
+  const body = { programIds: assignedProgramIds };
+  const res = await authFetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to update program access:", res.status, text);
+    throw new Error(`Failed to update program access: ${res.statusText}`);
+  }
+  if (res.status === 204) return { success: true };
+  try {
+    const json = await res.json();
+    return json;
+  } catch {
+    return { success: true };
+  }
 }
 
 export async function fetchVisibleMenus(

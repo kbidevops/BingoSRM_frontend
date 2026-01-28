@@ -16,6 +16,11 @@ import {
   Collapse,
   IconButton,
 } from "@mui/material";
+import {
+  fetchProgramAccessAll,
+  updateProgramAccess,
+  fetchAssignedMenus,
+} from "@/src/lib/auth";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CheckIcon from "@mui/icons-material/Check";
@@ -87,6 +92,38 @@ const menuTree: MenuNode[] = [
     ],
   },
 ];
+
+// Map legacy backend URIs to new app routes
+const legacyToNextRoute: Record<string, string> = {
+  // User management and related
+  "/user/mngr/retrievePagingList.do": "/user/user-management",
+  "/syscharger/mngr/retrieveList.do": "/user/system-manager",
+  "/progrm/mngr/retrieveTreeList.do": "/user/program",
+  "/progrmaccesauthor/mngr/retrieveTreeList.do": "/user/program-auth",
+
+  // SR (Service Request) management
+  "/srvcrspons/site/retrieveSrReqList.do": "/sr/request",
+  "/srvcrspons/site/retrieveSrRcvList.do": "/sr/receive",
+  "/srvcrspons/mngr/retrieveSrProcList.do": "/sr/process",
+  "/srvcrspons/mngr/retrieveSrVrList.do": "/sr/verify",
+  "/srvcrspons/mngr/retrieveSrFnList.do": "/sr/complete",
+  "/srvcrspons/mngr/retrieveSrEvList.do": "/sr/evaluation",
+};
+
+// Map next-route paths to our local tree node ids
+const routeToNodeId: Record<string, string> = {
+  "/user/user-management": "user-mgmt",
+  "/user/system-manager": "system-mgr",
+  "/user/program": "program-mgmt",
+  "/user/program-auth": "program-auth",
+
+  "/sr/request": "sr-request",
+  "/sr/receive": "sr-receive",
+  "/sr/process": "sr-process",
+  "/sr/verify": "sr-verify",
+  "/sr/complete": "sr-complete",
+  "/sr/evaluation": "sr-eval",
+};
 
 interface TreeItemProps {
   node: MenuNode;
@@ -218,11 +255,91 @@ export default function ProgramAuth() {
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
     // Load permissions for this role
-    if (role.id === "admin") {
-      setCheckedItems(new Set(["member-join", "signup", "signup-info"]));
-    } else {
-      setCheckedItems(new Set());
+    loadProgramAccessForRole(role.id).catch((err) => {
+      console.error("Failed to load program access for role", err);
+      // fallback
+      if (role.id === "admin") {
+        setCheckedItems(new Set(["member-join", "signup", "signup-info"]));
+      } else {
+        setCheckedItems(new Set());
+      }
+    });
+  };
+
+  // Load all programs and assigned programs for a given role/authority code
+  const loadProgramAccessForRole = async (authorCode: string) => {
+    // fetch all programs (with access info)
+    const all = await fetchProgramAccessAll(authorCode);
+    // fetch assigned-only list
+    const assigned = await fetchAssignedMenus(authorCode);
+
+    // Build set of node ids to check based on assigned programs and legacy route mapping
+    const assignedNodeIds = new Set<string>();
+
+    // helper to find node id by display name
+    const findNodeIdByName = (
+      nodes: MenuNode[],
+      name: string,
+    ): string | null => {
+      for (const node of nodes) {
+        if (node.name === name) return node.id;
+        if (node.children) {
+          const found = findNodeIdByName(node.children, name);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    // Prefer mapping assigned entries by legacy URI -> route -> nodeId
+    assigned.forEach((it) => {
+      const uri =
+        (it as any).progrmUri ||
+        (it as any).programUri ||
+        (it as any).menuUri ||
+        "";
+      if (uri && legacyToNextRoute[uri]) {
+        const nextRoute = legacyToNextRoute[uri];
+        const nodeId = routeToNodeId[nextRoute];
+        if (nodeId) assignedNodeIds.add(nodeId);
+      } else if ((it as any).progrmNm) {
+        const nodeId = findNodeIdByName(
+          menuTree,
+          (it as any).progrmNm as string,
+        );
+        if (nodeId) assignedNodeIds.add(nodeId);
+      }
+    });
+
+    // Also scan the full program list in case it contains URIs or assignedYn flags
+    all.forEach((p) => {
+      const uri = (p as any).progrmUri || (p as any).programUri || "";
+      if (uri && legacyToNextRoute[uri]) {
+        const nodeId = routeToNodeId[legacyToNextRoute[uri]];
+        if (nodeId) assignedNodeIds.add(nodeId);
+      }
+      if ((p as any).assignedYn === "Y" || (p as any).assignedYn === true) {
+        // try by name
+        const name = (p as any).progrmNm || (p as any).programNm;
+        if (name) {
+          const nodeId = findNodeIdByName(menuTree, name as string);
+          if (nodeId) assignedNodeIds.add(nodeId);
+        }
+      }
+    });
+
+    // Fallback: if nothing mapped, attempt to use progrmSn or program name from assigned
+    if (assignedNodeIds.size === 0) {
+      assigned.forEach((it) => {
+        const name = (it as any).progrmNm || (it as any).programNm;
+        if (name) {
+          const nodeId = findNodeIdByName(menuTree, name as string);
+          if (nodeId) assignedNodeIds.add(nodeId);
+        }
+      });
     }
+
+    setCheckedItems(assignedNodeIds);
   };
 
   // Helper function to get all descendant IDs
@@ -280,12 +397,17 @@ export default function ProgramAuth() {
   };
 
   const handleSave = () => {
-    console.log(
-      "Saving permissions for",
-      selectedRole.name,
-      Array.from(checkedItems),
-    );
-    // API call to save permissions
+    const assigned = Array.from(checkedItems);
+    console.log("Saving permissions for", selectedRole.name, assigned);
+    // call PUT /api/v1/program-access/{authorCode}
+    updateProgramAccess(selectedRole.id, assigned)
+      .then((res) => {
+        console.log("Update result", res);
+        // Optionally show success snackbar
+      })
+      .catch((err) => {
+        console.error("Failed to update program access", err);
+      });
   };
 
   return (
