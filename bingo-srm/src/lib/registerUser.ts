@@ -27,6 +27,8 @@ export async function registerUser(
 ): Promise<RegisterUserResponse> {
   const currentUserId = localStorage.getItem("userId");
   const userTyCode = localStorage.getItem("userTyCode");
+  const accessToken = localStorage.getItem("accessToken");
+  const tokenType = localStorage.getItem("tokenType") || "Bearer";
 
   const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
     method: "POST",
@@ -34,6 +36,7 @@ export async function registerUser(
       "Content-Type": "application/json",
       "X-User-Id": currentUserId || "",
       "X-User-Ty-Code": userTyCode || "",
+      ...(accessToken ? { Authorization: `${tokenType} ${accessToken}` } : {}),
     },
     body: JSON.stringify(userData),
   });
