@@ -18,6 +18,8 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useRef } from "react";
+import usePermissions from "@/src/hooks/usePermissions";
+import { routeToNodeId } from "@/src/lib/permissions";
 
 import {
   INavbarApp,
@@ -35,6 +37,29 @@ function LeftNavbarAppGroup({ appGroup }: { appGroup: INavbarAppGroup }) {
   const pathname = usePathname();
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef<{ [key: string]: number }>({});
+
+  const { allowedNodeIds } = usePermissions();
+
+  // Compute visible menus per app according to permissions
+  const appsWithVisible = appGroup.apps
+    .map((app) => {
+      if (!app.menus || app.menus.length === 0) {
+        return { ...app, visibleMenus: undefined, isVisible: true };
+      }
+
+      const visibleMenus = app.menus.filter((subApp) => {
+        const href = `/${app.to}` + (subApp.to !== "." ? `/${subApp.to}` : "");
+        const nodeId = routeToNodeId[href];
+        if (nodeId && !allowedNodeIds.has(nodeId)) return false;
+        return true;
+      });
+
+      return { ...app, visibleMenus, isVisible: visibleMenus.length > 0 };
+    })
+    .filter((a) => a.isVisible);
+
+  // If no apps remain visible in this group, hide the group entirely
+  if (appsWithVisible.length === 0) return null;
 
   const handleClick = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -106,7 +131,7 @@ function LeftNavbarAppGroup({ appGroup }: { appGroup: INavbarAppGroup }) {
       )}
 
       <List sx={{ p: 0, px: 1 }}>
-        {appGroup.apps.map((app) => {
+        {appsWithVisible.map((app) => {
           return (
             <Box key={app.id}>
               <ListItem disablePadding>
@@ -147,16 +172,14 @@ function LeftNavbarAppGroup({ appGroup }: { appGroup: INavbarAppGroup }) {
                 </ListItemButton>
               </ListItem>
 
-              {app.menus && (
+              {app.visibleMenus && (
                 <Collapse in={menuOpen[app.id]} timeout="auto">
                   <List dense sx={{ pl: 0.5 }}>
-                    {app.menus.map((subApp) => {
+                    {app.visibleMenus.map((subApp) => {
                       const href =
                         `/${app.to}` +
                         (subApp.to !== "." ? `/${subApp.to}` : "");
-
                       const isActive = pathname === href;
-
                       return (
                         <Link
                           key={subApp.id}
@@ -183,13 +206,11 @@ function LeftNavbarAppGroup({ appGroup }: { appGroup: INavbarAppGroup }) {
                                     ? "action.selected"
                                     : "transparent",
                                   fontWeight: isActive ? 600 : 400,
-
                                   "&.Mui-selected": {
                                     bgcolor: "action.selected",
                                     borderLeft: "3px solid",
                                     borderColor: "primary.main",
                                   },
-
                                   "&:hover": {
                                     bgcolor: "action.hover",
                                   },

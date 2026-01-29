@@ -6,6 +6,8 @@ import { Stack } from "@mui/material";
 import LeftNavBar from "@/src/components/sidebar/LeftNavbar/LeftNavbar";
 import TopNavBar from "@/src/components/sidebar/TopNavbar/TopNavbar";
 import { useLeftNavbarStore } from "@/src/store/navbar/leftNavbarStore";
+import { PermissionsProvider } from "@/src/context/PermissionsContext";
+import { getCurrentUser } from "@/src/lib/auth";
 
 interface LayoutWithNavbarProps {
   children: ReactNode;
@@ -32,19 +34,23 @@ export default function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
         overflow: "hidden",
       }}
     >
-      <LeftNavBar />
-
-      <Stack
-        sx={{
-          flexGrow: 1,
-          height: "100vh",
-          overflow: "auto",
-          bgcolor: "background.paper",
-        }}
+      <PermissionsProvider
+        authorCode={getCurrentUser().userTyCode ?? undefined}
       >
-        <TopNavBar />
-        {children}
-      </Stack>
+        <LeftNavBar />
+
+        <Stack
+          sx={{
+            flexGrow: 1,
+            height: "100vh",
+            overflow: "auto",
+            bgcolor: "background.paper",
+          }}
+        >
+          <TopNavBar />
+          {children}
+        </Stack>
+      </PermissionsProvider>
     </Stack>
   );
 }

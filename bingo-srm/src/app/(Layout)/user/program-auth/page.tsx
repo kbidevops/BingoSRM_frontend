@@ -22,6 +22,7 @@ import {
   fetchCodeTypes,
   fetchProgramAccessAssigned,
 } from "@/src/lib/auth";
+import { menuTree, legacyToNextRoute, routeToNodeId, normalizeUri, MenuNode } from "@/src/lib/permissions";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CheckIcon from "@mui/icons-material/Check";
@@ -36,76 +37,7 @@ interface Role {
   color: string;
 }
 
-interface MenuNode {
-  id: string;
-  name: string;
-  isFolder?: boolean;
-  children?: MenuNode[];
-  checked?: boolean;
-}
-
 // Roles will be loaded from server: GET /api/v1/code-types/R0/codes
-
-const menuTree: MenuNode[] = [
-  {
-    id: "basic-info",
-    name: "기준정보",
-    isFolder: true,
-    checked: false,
-    children: [
-      { id: "user-mgmt", name: "사용자관리", checked: false },
-      { id: "system-mgr", name: "시스템담당자관리", checked: false },
-      { id: "program-mgmt", name: "프로그램관리", checked: false },
-      { id: "program-auth", name: "프로그램접근관리", checked: false },
-    ],
-  },
-  {
-    id: "sr",
-    name: "SR관리",
-    isFolder: true,
-    checked: false,
-    children: [
-      { id: "sr-request", name: "SR요청", checked: false },
-      { id: "sr-receive", name: "SR접수", checked: false },
-      { id: "sr-process", name: "SR처리", checked: false },
-      { id: "sr-verify", name: "SR검증", checked: false },
-      { id: "sr-complete", name: "SR완료", checked: false },
-      { id: "sr-eval", name: "SR평가", checked: false },
-    ],
-  },
-];
-
-// Map legacy backend URIs to new app routes
-const legacyToNextRoute: Record<string, string> = {
-  // User management and related
-  "/user/mngr/retrievePagingList.do": "/user/user-management",
-  "/syscharger/mngr/retrieveList.do": "/user/system-manager",
-  "/progrm/mngr/retrieveTreeList.do": "/user/program",
-  "/progrmaccesauthor/mngr/retrieveTreeList.do": "/user/program-auth",
-
-  // SR (Service Request) management
-  "/srvcrspons/site/retrieveSrReqList.do": "/sr/request",
-  "/srvcrspons/site/retrieveSrRcvList.do": "/sr/receive",
-  "/srvcrspons/mngr/retrieveSrProcList.do": "/sr/process",
-  "/srvcrspons/mngr/retrieveSrVrList.do": "/sr/verify",
-  "/srvcrspons/mngr/retrieveSrFnList.do": "/sr/complete",
-  "/srvcrspons/mngr/retrieveSrEvList.do": "/sr/evaluation",
-};
-
-// Map next-route paths to our local tree node ids
-const routeToNodeId: Record<string, string> = {
-  "/user/user-management": "user-mgmt",
-  "/user/system-manager": "system-mgr",
-  "/user/program": "program-mgmt",
-  "/user/program-auth": "program-auth",
-
-  "/sr/request": "sr-request",
-  "/sr/receive": "sr-receive",
-  "/sr/process": "sr-process",
-  "/sr/verify": "sr-verify",
-  "/sr/complete": "sr-complete",
-  "/sr/evaluation": "sr-eval",
-};
 
 interface TreeItemProps {
   node: MenuNode;
