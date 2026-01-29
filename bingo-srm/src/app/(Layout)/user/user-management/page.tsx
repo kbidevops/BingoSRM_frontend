@@ -67,6 +67,8 @@ interface User {
   status: string;
 }
 
+import RequirePermission from "@/src/components/RequirePermission";
+
 export default function UserManagement() {
   // Work location codes state
   const [workLocationCodes, setWorkLocationCodes] = useState<
@@ -304,7 +306,7 @@ export default function UserManagement() {
         // Registration mode: use registerUser API
         const registerData: RegisterUserRequest = {
           userId: formData.userId,
-          userPassword: formData.userPassword, // Password field for registration
+          userPassword: formData.userPassword,
           userNm: formData.userNm,
           userTyCode: formData.userTyCode,
           userSttusCode: formData.userSttusCode,
@@ -315,6 +317,7 @@ export default function UserManagement() {
           acntReqstResn: formData.acntReqstResn,
           userLocat: formData.userLocat,
         };
+
         const result = await registerUser(registerData);
         if (!result.success) {
           enqueueSnackbar(result.message || "사용자 등록에 실패했습니다.", {
@@ -324,21 +327,38 @@ export default function UserManagement() {
           setSaveLoading(false);
           return;
         }
+
+        enqueueSnackbar(
+          t("userManagement.messages.registerSuccess") ||
+            "사용자 등록이 완료되었습니다.",
+          { variant: "success", ...snackbarOptions },
+        );
       } else {
-        // Update mode: use updateUser API
-        const updateData: import("@/src/lib/auth").UpdateUserRequest = {
+        // Edit mode: prepare update payload
+        const updateData: Record<string, any> = {
           userNm: formData.userNm,
-          userTyCode: formData.userTyCode,
-          userSttusCode: formData.userSttusCode,
+          email: formData.email,
           psitn: formData.psitn,
           clsf: formData.clsf,
           moblphon: formData.moblphon,
-          email: formData.email,
+          userTyCode: formData.userTyCode,
+          userSttusCode: formData.userSttusCode,
           acntReqstResn: formData.acntReqstResn,
           userLocat: formData.userLocat,
         };
+
+        if (formData.changePasswordYN === "Y" && formData.userPassword) {
+          updateData.userPassword = formData.userPassword;
+        }
+
         await updateUser(formData.userId, updateData);
+        enqueueSnackbar(
+          t("userManagement.messages.saveSuccess") ||
+            "사용자 정보가 저장되었습니다.",
+          { variant: "success", ...snackbarOptions },
+        );
       }
+
       setOpenDialog(false);
       loadUsers(); // Reload user list
     } catch (error) {
@@ -461,929 +481,366 @@ export default function UserManagement() {
   ];
 
   return (
-    <Stack
-      sx={{
-        height: "100vh",
-        bgcolor: "background.default",
-        p: 3,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Page Header */}
-      <Box sx={{ mb: 2 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            color: "text.primary",
-            letterSpacing: "-0.02em",
-            mb: 0.5,
-          }}
-        >
-          {t("userManagement.title")}
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            fontSize: "0.875rem",
-          }}
-        >
-          {t("userManagement.subtitle")}
-        </Typography>
-      </Box>
-
-      {/* Search Form */}
-      <Box
+    <RequirePermission nodeId="user-mgmt">
+      <Stack
         sx={{
-          bgcolor: "background.paper",
-          p: 1.5,
-          borderRadius: 2,
-          mb: 1.5,
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow:
-            "0 2px 4px -1px rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
-          transition: "all 0.2s ease-in-out",
-          "&:hover": {
-            boxShadow:
-              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-          },
-          flexShrink: 0,
+          height: "100vh",
+          bgcolor: "background.default",
+          p: 3,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ mb: searchExpanded ? 1.5 : 0 }}
-        >
+        {/* Page Header */}
+        <Box sx={{ mb: 2 }}>
           <Typography
-            variant="subtitle2"
+            variant="h5"
             sx={{
-              fontWeight: 600,
+              fontWeight: 700,
               color: "text.primary",
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            {t("userManagement.title")}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
               fontSize: "0.875rem",
             }}
           >
-            <FilterListIcon fontSize="small" sx={{ color: "primary.main" }} />
-            {t("userManagement.searchConditions")}
+            {t("userManagement.subtitle")}
           </Typography>
-          <IconButton
-            size="small"
-            onClick={() => setSearchExpanded(!searchExpanded)}
-            aria-label={t("userManagement.searchToggle")}
-            aria-controls="search-conditions"
-            aria-expanded={searchExpanded}
-            id="search-toggle-button"
-            sx={{
-              transition: "transform 0.2s",
-              transform: searchExpanded ? "rotate(0deg)" : "rotate(180deg)",
-            }}
+        </Box>
+
+        {/* Search Form */}
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            p: 1.5,
+            borderRadius: 2,
+            mb: 1.5,
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow:
+              "0 2px 4px -1px rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
+            transition: "all 0.2s ease-in-out",
+            "&:hover": {
+              boxShadow:
+                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            },
+            flexShrink: 0,
+          }}
+        >
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: searchExpanded ? 1.5 : 0 }}
           >
-            <ExpandMoreIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-        {searchExpanded && (
-          <Stack spacing={1.5} id="search-conditions" aria-live="polite">
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              flexWrap="wrap"
-              alignItems="center"
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                color: "text.primary",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                fontSize: "0.875rem",
+              }}
             >
-              <TextField
-                label={t("userManagement.fields.userId")}
-                size="small"
-                value={searchUserId}
-                onChange={(e) => setSearchUserId(e.target.value)}
-                sx={{
-                  width: { xs: "100%", sm: "180px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                placeholder={t("userManagement.placeholders.userId")}
-              />
-              <TextField
-                label={t("userManagement.fields.name")}
-                size="small"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                sx={{
-                  width: { xs: "100%", sm: "180px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                placeholder={t("userManagement.placeholders.name")}
-              />
-              <TextField
-                select
-                label={t("userManagement.fields.role")}
-                size="small"
-                sx={{
-                  width: { xs: "100%", sm: "140px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                value={searchRole}
-                onChange={(e) => setSearchRole(e.target.value)}
+              <FilterListIcon fontSize="small" sx={{ color: "primary.main" }} />
+              {t("userManagement.searchConditions")}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setSearchExpanded(!searchExpanded)}
+              aria-label={t("userManagement.searchToggle")}
+              aria-controls="search-conditions"
+              aria-expanded={searchExpanded}
+              id="search-toggle-button"
+              sx={{
+                transition: "transform 0.2s",
+                transform: searchExpanded ? "rotate(0deg)" : "rotate(180deg)",
+              }}
+            >
+              <ExpandMoreIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+          {searchExpanded && (
+            <Stack spacing={1.5} id="search-conditions" aria-live="polite">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                flexWrap="wrap"
+                alignItems="center"
               >
-                <MenuItem value="ALL">
-                  {t("userManagement.options.all")}
-                </MenuItem>
-                {roleCodes
-                  .filter(
-                    (role) =>
-                      role.cmmnCode !== "R002" && role.cmmnCode !== "R004",
-                  )
-                  .map((role) =>
-                    role.cmmnCode ? (
-                      <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
-                        {role.cmmnCodeNm}
+                <TextField
+                  label={t("userManagement.fields.userId")}
+                  size="small"
+                  value={searchUserId}
+                  onChange={(e) => setSearchUserId(e.target.value)}
+                  sx={{
+                    width: { xs: "100%", sm: "180px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  placeholder={t("userManagement.placeholders.userId")}
+                />
+                <TextField
+                  label={t("userManagement.fields.name")}
+                  size="small"
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  sx={{
+                    width: { xs: "100%", sm: "180px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  placeholder={t("userManagement.placeholders.name")}
+                />
+                <TextField
+                  select
+                  label={t("userManagement.fields.role")}
+                  size="small"
+                  sx={{
+                    width: { xs: "100%", sm: "140px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  value={searchRole}
+                  onChange={(e) => setSearchRole(e.target.value)}
+                >
+                  <MenuItem value="ALL">
+                    {t("userManagement.options.all")}
+                  </MenuItem>
+                  {roleCodes
+                    .filter(
+                      (role) =>
+                        role.cmmnCode !== "R002" && role.cmmnCode !== "R004",
+                    )
+                    .map((role) =>
+                      role.cmmnCode ? (
+                        <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
+                          {role.cmmnCodeNm}
+                        </MenuItem>
+                      ) : null,
+                    )}
+                </TextField>
+                <TextField
+                  label={t("userManagement.fields.organization")}
+                  size="small"
+                  value={searchOrg}
+                  onChange={(e) => setSearchOrg(e.target.value)}
+                  sx={{
+                    width: { xs: "100%", sm: "180px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  placeholder={t("userManagement.placeholders.organization")}
+                />
+                <TextField
+                  label={t("userManagement.fields.position")}
+                  size="small"
+                  value={searchPosition}
+                  onChange={(e) => setSearchPosition(e.target.value)}
+                  sx={{
+                    width: { xs: "100%", sm: "180px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  placeholder={t("userManagement.placeholders.position")}
+                />
+                <TextField
+                  select
+                  label={t("userManagement.fields.status")}
+                  size="small"
+                  sx={{
+                    width: { xs: "100%", sm: "140px" },
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.default",
+                      height: "36px",
+                      borderRadius: 1.5,
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                  value={searchStatus}
+                  onChange={(e) => setSearchStatus(e.target.value)}
+                >
+                  <MenuItem value="ALL">
+                    {t("userManagement.options.all")}
+                  </MenuItem>
+                  {statusCodes.map((status) =>
+                    status.cmmnCode ? (
+                      <MenuItem key={status.cmmnCode} value={status.cmmnCode}>
+                        {status.cmmnCodeNm || status.cmmnCode}
                       </MenuItem>
                     ) : null,
                   )}
-              </TextField>
-              <TextField
-                label={t("userManagement.fields.organization")}
-                size="small"
-                value={searchOrg}
-                onChange={(e) => setSearchOrg(e.target.value)}
-                sx={{
-                  width: { xs: "100%", sm: "180px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                placeholder={t("userManagement.placeholders.organization")}
-              />
-              <TextField
-                label={t("userManagement.fields.position")}
-                size="small"
-                value={searchPosition}
-                onChange={(e) => setSearchPosition(e.target.value)}
-                sx={{
-                  width: { xs: "100%", sm: "180px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                placeholder={t("userManagement.placeholders.position")}
-              />
-              <TextField
-                select
-                label={t("userManagement.fields.status")}
-                size="small"
-                sx={{
-                  width: { xs: "100%", sm: "140px" },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    height: "36px",
-                    borderRadius: 1.5,
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    fontSize: "0.875rem",
-                  },
-                }}
-                value={searchStatus}
-                onChange={(e) => setSearchStatus(e.target.value)}
+                </TextField>
+              </Stack>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+                spacing={1}
+                sx={{ pt: 0.5, width: "100%" }}
               >
-                <MenuItem value="ALL">
-                  {t("userManagement.options.all")}
-                </MenuItem>
-                {statusCodes.map((status) =>
-                  status.cmmnCode ? (
-                    <MenuItem key={status.cmmnCode} value={status.cmmnCode}>
-                      {status.cmmnCodeNm || status.cmmnCode}
-                    </MenuItem>
-                  ) : null,
-                )}
-              </TextField>
-            </Stack>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              justifyContent={{ xs: "flex-start", sm: "flex-end" }}
-              spacing={1}
-              sx={{ pt: 0.5, width: "100%" }}
-            >
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon fontSize="small" />}
-                size="small"
-                onClick={handleReset}
-                sx={{
-                  borderRadius: 1.5,
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.5,
-                  minHeight: "32px",
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                  borderWidth: 1.5,
-                  transition: "all 0.2s",
-                  alignSelf: { xs: "stretch", sm: "auto" },
-                  justifyContent: "center",
-                  width: { xs: "100%", sm: "auto" },
-                  "&:hover": {
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon fontSize="small" />}
+                  size="small"
+                  onClick={handleReset}
+                  sx={{
+                    borderRadius: 1.5,
+                    textTransform: "none",
+                    px: 2,
+                    py: 0.5,
+                    minHeight: "32px",
+                    fontSize: "0.8125rem",
+                    fontWeight: 500,
                     borderWidth: 1.5,
-                    transform: "translateY(-1px)",
-                    boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                  },
-                }}
-              >
-                {t("userManagement.buttons.reset")}
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<SearchIcon fontSize="small" />}
-                size="small"
-                onClick={handleSearch}
-                sx={{
-                  borderRadius: 1.5,
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.5,
-                  minHeight: "32px",
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                  boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.1)",
-                  transition: "all 0.2s",
-                  alignSelf: { xs: "stretch", sm: "auto" },
-                  justifyContent: "center",
-                  width: { xs: "100%", sm: "auto" },
-                  "&:hover": {
-                    transform: "translateY(-1px)",
-                    boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.15)",
-                  },
-                }}
-              >
-                {t("userManagement.buttons.search")}
-              </Button>
-            </Stack>
-          </Stack>
-        )}
-      </Box>
-
-      {/* Action Bar */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1.5, flexShrink: 0 }}
-      >
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            fontWeight: 500,
-          }}
-        >
-          {t("userManagement.totalUsers", { count: totalCount })}
-        </Typography>
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<PersonAddIcon />}
-          onClick={handleCreateUser}
-          sx={{
-            borderRadius: 1.5,
-            textTransform: "none",
-            px: 3,
-            fontWeight: 500,
-            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          {t("userManagement.buttons.register")}
-        </Button>
-      </Stack>
-
-      {/* Data Grid */}
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          bgcolor: "background.paper",
-          borderRadius: 2,
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-          "& .MuiDataGrid-root": {
-            border: "none",
-            bgcolor: "background.paper",
-          },
-          "& .MuiDataGrid-cell": {
-            borderColor: "divider",
-            py: 1.5,
-            display: "flex",
-            alignItems: "center",
-            "&:focus, &:focus-within": {
-              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-              outlineOffset: "-2px",
-            },
-          },
-          "& .MuiDataGrid-columnHeaders": {
-            bgcolor: "action.hover",
-            borderBottom: "2px solid",
-            borderColor: "divider",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            color: "text.primary",
-          },
-          "& .MuiDataGrid-columnHeader": {
-            "&:focus, &:focus-within": {
-              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-              outlineOffset: "-2px",
-            },
-          },
-          "& .MuiDataGrid-row": {
-            bgcolor: "background.paper",
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-            "&.Mui-selected": {
-              bgcolor: "action.selected",
-              "&:hover": {
-                bgcolor: "action.selected",
-              },
-            },
-          },
-          "& .MuiDataGrid-virtualScroller": {
-            bgcolor: "background.paper",
-          },
-          "& .MuiDataGrid-footerContainer": {
-            bgcolor: "background.paper",
-            borderTop: "1px solid",
-            borderColor: "divider",
-          },
-        }}
-      >
-        <DataGrid
-          aria-label={t("userManagement.dataGrid")}
-          rows={users}
-          columns={columns}
-          pagination
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 15, 30, 50]}
-          rowCount={totalCount}
-          paginationMode="server"
-          loading={loading}
-          disableRowSelectionOnClick
-          checkboxSelection={true}
-          selectionModel={selectionModel}
-          onSelectionModelChange={(newModel) => setSelectionModel(newModel)}
-          disableColumnMenu
-        />
-      </Box>
-
-      {/* User Registration Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        aria-labelledby="user-dialog-title"
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            pb: 2,
-          }}
-          id="user-dialog-title"
-        >
-          <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
-            {dialogMode === "create"
-              ? t("userManagement.dialog.createTitle")
-              : t("userManagement.dialog.editTitle")}
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Box sx={{ pt: 2 }}>
-            <Stack spacing={3}>
-              {/* Row 1: User ID and Name */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 사용자 아이디
-                  </Typography>
-                  <Stack direction="row" spacing={1}>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      value={formData.userId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, userId: e.target.value })
-                      }
-                      disabled={dialogMode === "edit"}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: 1.5,
-                        },
-                      }}
-                    />
-                    {dialogMode === "create" && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        aria-label={t("userManagement.buttons.checkDuplicate")}
-                        sx={{
-                          whiteSpace: "nowrap",
-                          borderRadius: 1.5,
-                          textTransform: "none",
-                          fontWeight: 500,
-                        }}
-                        onClick={async () => {
-                          if (!formData.userId) {
-                            enqueueSnackbar("아이디를 입력하세요.", {
-                              variant: "warning",
-                              ...snackbarOptions,
-                            });
-                            return;
-                          }
-                          const result = await checkUserIdDuplicate(
-                            formData.userId,
-                          );
-                          if (result.taken) {
-                            enqueueSnackbar("이미 사용 중인 아이디입니다.", {
-                              variant: "error",
-                              ...snackbarOptions,
-                            });
-                          } else if (result.error) {
-                            enqueueSnackbar(
-                              "중복 확인 중 오류 발생: " + result.error,
-                              {
-                                variant: "error",
-                                ...snackbarOptions,
-                              },
-                            );
-                          } else {
-                            enqueueSnackbar("사용 가능한 아이디입니다.", {
-                              variant: "success",
-                              ...snackbarOptions,
-                            });
-                          }
-                        }}
-                      >
-                        중복확인
-                      </Button>
-                    )}
-                  </Stack>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 성명
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    value={formData.userNm}
-                    onChange={(e) =>
-                      setFormData({ ...formData, userNm: e.target.value })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-
-              {/* Row 2: Password and Password Confirmation */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ mb: 1 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 500,
-                        color: "text.primary",
-                      }}
-                    >
-                      • 비밀번호
-                    </Typography>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={formData.changePasswordYN === "Y"}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              changePasswordYN: e.target.checked ? "Y" : "N",
-                            })
-                          }
-                        />
-                      }
-                      label={<Typography variant="body2">변경</Typography>}
-                      sx={{ m: 0 }}
-                    />
-                  </Stack>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    type="password"
-                    value={formData.userPassword}
-                    onChange={(e) =>
-                      setFormData({ ...formData, userPassword: e.target.value })
-                    }
-                    disabled={formData.changePasswordYN !== "Y"}
-                    placeholder="비밀번호"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 비밀번호 확인
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    type="password"
-                    value={formData.userPasswordConfirm}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        userPasswordConfirm: e.target.value,
-                      })
-                    }
-                    disabled={formData.changePasswordYN !== "Y"}
-                    placeholder="비밀번호 확인"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-
-              {/* Row 3: Email and Contact */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 이메일
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 연락처(휴대폰)
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    value={formData.moblphon}
-                    onChange={(e) =>
-                      setFormData({ ...formData, moblphon: e.target.value })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 직급
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    defaultValue={selectedUser?.position || ""}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-
-              {/* Row 5: Work Location and Remarks */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 근무위치
-                  </Typography>
-                  <TextField
-                    select
-                    size="small"
-                    fullWidth
-                    value={formData.userLocat || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, userLocat: e.target.value })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  >
-                    <MenuItem value="">선택</MenuItem>
-                    {workLocationCodes.map((loc) =>
-                      loc.cmmnCode ? (
-                        <MenuItem key={loc.cmmnCode} value={loc.cmmnCode}>
-                          {loc.cmmnCodeNm || loc.cmmnCode}
-                        </MenuItem>
-                      ) : null,
-                    )}
-                  </TextField>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 계정상태사유/비고
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-
-              {/* Row 6: Authority and Status */}
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 권한
-                  </Typography>
-                  <TextField
-                    select
-                    size="small"
-                    fullWidth
-                    value={formData.userTyCode}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        userTyCode: e.target.value,
-                      })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  >
-                    <MenuItem value="">선택하세요</MenuItem>
-                    {roleCodes
-                      .filter(
-                        (role) =>
-                          role.cmmnCode !== "R002" && role.cmmnCode !== "R004",
-                      )
-                      .map((role) =>
-                        role.cmmnCode ? (
-                          <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
-                            {role.cmmnCodeNm}
-                          </MenuItem>
-                        ) : null,
-                      )}
-                  </TextField>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 500,
-                      color: "text.primary",
-                    }}
-                  >
-                    • 상태
-                  </Typography>
-                  <TextField
-                    select
-                    size="small"
-                    fullWidth
-                    value={formData.userSttusCode}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        userSttusCode: e.target.value,
-                      })
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1.5,
-                      },
-                    }}
-                  >
-                    <MenuItem value="ALL">
-                      {t("userManagement.options.all")}
-                    </MenuItem>
-                    {statusCodes.map((status) =>
-                      status.cmmnCode ? (
-                        <MenuItem key={status.cmmnCode} value={status.cmmnCode}>
-                          {status.cmmnCodeNm || status.cmmnCode}
-                        </MenuItem>
-                      ) : null,
-                    )}
-                  </TextField>
-                </Box>
+                    transition: "all 0.2s",
+                    alignSelf: { xs: "stretch", sm: "auto" },
+                    justifyContent: "center",
+                    width: { xs: "100%", sm: "auto" },
+                    "&:hover": {
+                      borderWidth: 1.5,
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
+                    },
+                  }}
+                >
+                  {t("userManagement.buttons.reset")}
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<SearchIcon fontSize="small" />}
+                  size="small"
+                  onClick={handleSearch}
+                  sx={{
+                    borderRadius: 1.5,
+                    textTransform: "none",
+                    px: 2,
+                    py: 0.5,
+                    minHeight: "32px",
+                    fontSize: "0.8125rem",
+                    fontWeight: 500,
+                    boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.1)",
+                    transition: "all 0.2s",
+                    alignSelf: { xs: "stretch", sm: "auto" },
+                    justifyContent: "center",
+                    width: { xs: "100%", sm: "auto" },
+                    "&:hover": {
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.15)",
+                    },
+                  }}
+                >
+                  {t("userManagement.buttons.search")}
+                </Button>
               </Stack>
             </Stack>
-          </Box>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            p: 2.5,
-            gap: 1,
-            borderTop: "1px solid",
-            borderColor: "divider",
-          }}
+          )}
+        </Box>
+
+        {/* Action Bar */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 1.5, flexShrink: 0 }}
         >
-          <Button
-            variant="outlined"
-            onClick={() => setOpenDialog(false)}
+          <Typography
+            variant="body2"
             sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              px: 3,
+              color: "text.secondary",
               fontWeight: 500,
             }}
           >
-            {t("userManagement.buttons.list")}
-          </Button>
+            {t("userManagement.totalUsers", { count: totalCount })}
+          </Typography>
           <Button
             variant="contained"
-            onClick={handleSaveUser}
-            disabled={saveLoading}
+            size="medium"
+            startIcon={<PersonAddIcon />}
+            onClick={handleCreateUser}
             sx={{
               borderRadius: 1.5,
               textTransform: "none",
@@ -1392,150 +849,728 @@ export default function UserManagement() {
               boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
             }}
           >
-            {saveLoading ? "저장 중..." : t("userManagement.buttons.save")}
+            {t("userManagement.buttons.register")}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Stack>
 
-      {/* Actions Menu */}
-      <Menu
-        id="user-actions-menu"
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-        MenuListProps={{
-          "aria-label": t("userManagement.buttons.actions"),
-        }}
-      >
-        <MenuItem
-          onClick={() => {
-            if (selectedUser) {
-              handleEditUser(selectedUser);
-            }
-            setAnchorEl(null);
-          }}
-        >
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t("userManagement.buttons.edit")}</ListItemText>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setDeleteConfirmOpen(true);
-            setAnchorEl(null);
-          }}
-        >
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>{t("userManagement.buttons.delete")}</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog (styled) */}
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        aria-labelledby="delete-confirm-title"
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            width: { xs: "90%", sm: 420 },
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        {/* Data Grid */}
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
             bgcolor: "background.paper",
-          },
-        }}
-      >
-        <DialogContent sx={{ pt: 3, px: 4, pb: 2, textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              bgcolor: (theme) => theme.palette.error.main,
-              color: "#fff",
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow:
+              "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+            "& .MuiDataGrid-root": {
+              border: "none",
+              bgcolor: "background.paper",
+            },
+            "& .MuiDataGrid-cell": {
+              borderColor: "divider",
+              py: 1.5,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
-            }}
-            aria-hidden
-          >
-            <ErrorOutlineIcon fontSize="large" />
-          </Box>
-
-          <Typography
-            id="delete-confirm-title"
-            variant="h6"
-            component="div"
-            sx={{ fontWeight: 700, mb: 1 }}
-          >
-            {t("userManagement.dialog.deleteTitle") || "정말 삭제하시겠습니까?"}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-            {t("userManagement.dialog.deleteWarning") ||
-              "삭제된 데이터는 복구할 수 없습니다."}
-          </Typography>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            p: 3,
-            gap: 2,
-            justifyContent: "space-between",
+              "&:focus, &:focus-within": {
+                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: "-2px",
+              },
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              bgcolor: "action.hover",
+              borderBottom: "2px solid",
+              borderColor: "divider",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: "text.primary",
+            },
+            "& .MuiDataGrid-columnHeader": {
+              "&:focus, &:focus-within": {
+                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: "-2px",
+              },
+            },
+            "& .MuiDataGrid-row": {
+              bgcolor: "background.paper",
+              "&:hover": {
+                bgcolor: "action.hover",
+              },
+              "&.Mui-selected": {
+                bgcolor: "action.selected",
+                "&:hover": {
+                  bgcolor: "action.selected",
+                },
+              },
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              bgcolor: "background.paper",
+            },
+            "& .MuiDataGrid-footerContainer": {
+              bgcolor: "background.paper",
+              borderTop: "1px solid",
+              borderColor: "divider",
+            },
           }}
         >
-          <Button
-            onClick={() => setDeleteConfirmOpen(false)}
+          <DataGrid
+            aria-label={t("userManagement.dataGrid")}
+            rows={users}
+            columns={columns}
+            pagination
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[5, 15, 30, 50]}
+            rowCount={totalCount}
+            paginationMode="server"
+            loading={loading}
+            disableRowSelectionOnClick
+            checkboxSelection={true}
+            selectionModel={selectionModel}
+            onSelectionModelChange={(newModel) => setSelectionModel(newModel)}
+            disableColumnMenu
+          />
+        </Box>
+
+        {/* User Registration Dialog */}
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          aria-labelledby="user-dialog-title"
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            },
+          }}
+        >
+          <DialogTitle
             sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              px: 3,
-              fontWeight: 500,
-              color: "text.primary",
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              pb: 2,
             }}
-            aria-label={t("userManagement.buttons.cancel")}
+            id="user-dialog-title"
           >
-            {t("userManagement.buttons.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={async () => {
-              if (!selectedUser) return;
-              try {
-                await deleteUser(selectedUser.userId);
-                enqueueSnackbar(
-                  t("userManagement.messages.deleteSuccess") ||
-                    "사용자 삭제가 완료되었습니다.",
-                  { variant: "success", ...snackbarOptions },
-                );
-                setDeleteConfirmOpen(false);
-                setSelectedUser(null);
-                loadUsers();
-              } catch (err) {
-                console.error("Failed to delete user:", err);
-                enqueueSnackbar("사용자 삭제에 실패했습니다.", {
-                  variant: "error",
-                  ...snackbarOptions,
-                });
+            <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
+              {dialogMode === "create"
+                ? t("userManagement.dialog.createTitle")
+                : t("userManagement.dialog.editTitle")}
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Box sx={{ pt: 2 }}>
+              <Stack spacing={3}>
+                {/* Row 1: User ID and Name */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 사용자 아이디
+                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                      <TextField
+                        size="small"
+                        fullWidth
+                        value={formData.userId}
+                        onChange={(e) =>
+                          setFormData({ ...formData, userId: e.target.value })
+                        }
+                        disabled={dialogMode === "edit"}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: 1.5,
+                          },
+                        }}
+                      />
+                      {dialogMode === "create" && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          aria-label={t(
+                            "userManagement.buttons.checkDuplicate",
+                          )}
+                          sx={{
+                            whiteSpace: "nowrap",
+                            borderRadius: 1.5,
+                            textTransform: "none",
+                            fontWeight: 500,
+                          }}
+                          onClick={async () => {
+                            if (!formData.userId) {
+                              enqueueSnackbar("아이디를 입력하세요.", {
+                                variant: "warning",
+                                ...snackbarOptions,
+                              });
+                              return;
+                            }
+                            const result = await checkUserIdDuplicate(
+                              formData.userId,
+                            );
+                            if (result.taken) {
+                              enqueueSnackbar("이미 사용 중인 아이디입니다.", {
+                                variant: "error",
+                                ...snackbarOptions,
+                              });
+                            } else if (result.error) {
+                              enqueueSnackbar(
+                                "중복 확인 중 오류 발생: " + result.error,
+                                {
+                                  variant: "error",
+                                  ...snackbarOptions,
+                                },
+                              );
+                            } else {
+                              enqueueSnackbar("사용 가능한 아이디입니다.", {
+                                variant: "success",
+                                ...snackbarOptions,
+                              });
+                            }
+                          }}
+                        >
+                          중복확인
+                        </Button>
+                      )}
+                    </Stack>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 성명
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={formData.userNm}
+                      onChange={(e) =>
+                        setFormData({ ...formData, userNm: e.target.value })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+
+                {/* Row 2: Password and Password Confirmation */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 1 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      sx={{ mb: 1 }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "text.primary",
+                        }}
+                      >
+                        • 비밀번호
+                      </Typography>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            size="small"
+                            checked={formData.changePasswordYN === "Y"}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                changePasswordYN: e.target.checked ? "Y" : "N",
+                              })
+                            }
+                          />
+                        }
+                        label={<Typography variant="body2">변경</Typography>}
+                        sx={{ m: 0 }}
+                      />
+                    </Stack>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      type="password"
+                      value={formData.userPassword}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          userPassword: e.target.value,
+                        })
+                      }
+                      disabled={formData.changePasswordYN !== "Y"}
+                      placeholder="비밀번호"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 비밀번호 확인
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      type="password"
+                      value={formData.userPasswordConfirm}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          userPasswordConfirm: e.target.value,
+                        })
+                      }
+                      disabled={formData.changePasswordYN !== "Y"}
+                      placeholder="비밀번호 확인"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+
+                {/* Row 3: Email and Contact */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 이메일
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 연락처(휴대폰)
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={formData.moblphon}
+                      onChange={(e) =>
+                        setFormData({ ...formData, moblphon: e.target.value })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 직급
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      defaultValue={selectedUser?.position || ""}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+
+                {/* Row 5: Work Location and Remarks */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 근무위치
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      value={formData.userLocat || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, userLocat: e.target.value })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    >
+                      <MenuItem value="">선택</MenuItem>
+                      {workLocationCodes.map((loc) =>
+                        loc.cmmnCode ? (
+                          <MenuItem key={loc.cmmnCode} value={loc.cmmnCode}>
+                            {loc.cmmnCodeNm || loc.cmmnCode}
+                          </MenuItem>
+                        ) : null,
+                      )}
+                    </TextField>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 계정상태사유/비고
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+
+                {/* Row 6: Authority and Status */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 권한
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      value={formData.userTyCode}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          userTyCode: e.target.value,
+                        })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    >
+                      <MenuItem value="">선택하세요</MenuItem>
+                      {roleCodes
+                        .filter(
+                          (role) =>
+                            role.cmmnCode !== "R002" &&
+                            role.cmmnCode !== "R004",
+                        )
+                        .map((role) =>
+                          role.cmmnCode ? (
+                            <MenuItem key={role.cmmnCode} value={role.cmmnCode}>
+                              {role.cmmnCodeNm}
+                            </MenuItem>
+                          ) : null,
+                        )}
+                    </TextField>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        fontWeight: 500,
+                        color: "text.primary",
+                      }}
+                    >
+                      • 상태
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      value={formData.userSttusCode}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          userSttusCode: e.target.value,
+                        })
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 1.5,
+                        },
+                      }}
+                    >
+                      <MenuItem value="ALL">
+                        {t("userManagement.options.all")}
+                      </MenuItem>
+                      {statusCodes.map((status) =>
+                        status.cmmnCode ? (
+                          <MenuItem
+                            key={status.cmmnCode}
+                            value={status.cmmnCode}
+                          >
+                            {status.cmmnCodeNm || status.cmmnCode}
+                          </MenuItem>
+                        ) : null,
+                      )}
+                    </TextField>
+                  </Box>
+                </Stack>
+              </Stack>
+            </Box>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              p: 2.5,
+              gap: 1,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={() => setOpenDialog(false)}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                px: 3,
+                fontWeight: 500,
+              }}
+            >
+              {t("userManagement.buttons.list")}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveUser}
+              disabled={saveLoading}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                px: 3,
+                fontWeight: 500,
+                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              }}
+            >
+              {saveLoading ? "저장 중..." : t("userManagement.buttons.save")}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Actions Menu */}
+        <Menu
+          id="user-actions-menu"
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+          MenuListProps={{
+            "aria-label": t("userManagement.buttons.actions"),
+          }}
+        >
+          <MenuItem
+            onClick={() => {
+              if (selectedUser) {
+                handleEditUser(selectedUser);
               }
+              setAnchorEl(null);
             }}
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              px: 3,
-              fontWeight: 600,
-              boxShadow: "0 6px 12px rgba(0,0,0,0.08)",
-            }}
-            aria-label={t("userManagement.buttons.delete")}
           >
-            {t("userManagement.buttons.delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t("userManagement.buttons.edit")}</ListItemText>
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setDeleteConfirmOpen(true);
+              setAnchorEl(null);
+            }}
+          >
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>{t("userManagement.buttons.delete")}</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Delete Confirmation Dialog (styled) */}
+        <Dialog
+          open={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          aria-labelledby="delete-confirm-title"
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+              width: { xs: "90%", sm: 420 },
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              bgcolor: "background.paper",
+            },
+          }}
+        >
+          <DialogContent sx={{ pt: 3, px: 4, pb: 2, textAlign: "center" }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                bgcolor: (theme) => theme.palette.error.main,
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+              }}
+              aria-hidden
+            >
+              <ErrorOutlineIcon fontSize="large" />
+            </Box>
+
+            <Typography
+              id="delete-confirm-title"
+              variant="h6"
+              component="div"
+              sx={{ fontWeight: 700, mb: 1 }}
+            >
+              {t("userManagement.dialog.deleteTitle") ||
+                "정말 삭제하시겠습니까?"}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", mb: 1.5 }}
+            >
+              {t("userManagement.dialog.deleteWarning") ||
+                "삭제된 데이터는 복구할 수 없습니다."}
+            </Typography>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              p: 3,
+              gap: 2,
+              justifyContent: "space-between",
+            }}
+          >
+            <Button
+              onClick={() => setDeleteConfirmOpen(false)}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                px: 3,
+                fontWeight: 500,
+                color: "text.primary",
+              }}
+              aria-label={t("userManagement.buttons.cancel")}
+            >
+              {t("userManagement.buttons.cancel")}
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={async () => {
+                if (!selectedUser) return;
+                try {
+                  await deleteUser(selectedUser.userId);
+                  enqueueSnackbar(
+                    t("userManagement.messages.deleteSuccess") ||
+                      "사용자 삭제가 완료되었습니다.",
+                    { variant: "success", ...snackbarOptions },
+                  );
+                  setDeleteConfirmOpen(false);
+                  setSelectedUser(null);
+                  loadUsers();
+                } catch (err) {
+                  console.error("Failed to delete user:", err);
+                  enqueueSnackbar("사용자 삭제에 실패했습니다.", {
+                    variant: "error",
+                    ...snackbarOptions,
+                  });
+                }
+              }}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                px: 3,
+                fontWeight: 600,
+                boxShadow: "0 6px 12px rgba(0,0,0,0.08)",
+              }}
+              aria-label={t("userManagement.buttons.delete")}
+            >
+              {t("userManagement.buttons.delete")}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Stack>
+    </RequirePermission>
   );
 }

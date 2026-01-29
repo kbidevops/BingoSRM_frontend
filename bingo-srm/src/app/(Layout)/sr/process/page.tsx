@@ -19,6 +19,7 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import RequirePermission from "@/src/components/RequirePermission";
 import { GridColDef } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -240,121 +241,123 @@ export default function SRProcessPage() {
   ];
 
   return (
-    <Stack
-      sx={{
-        height: "100%",
-        bgcolor: "background.default",
-        p: { xs: 2, md: 3 },
-        overflow: "hidden",
-      }}
-    >
-      {/* Page Title */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            color: "text.primary",
-            letterSpacing: "-0.02em",
-            mb: 0.5,
-          }}
-        >
-          {t("srProcess.title")}
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            fontSize: "0.875rem",
-          }}
-        >
-          {t("srProcess.subtitle")}
-        </Typography>
-      </Box>
-
+    <RequirePermission nodeId="sr-process">
       <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={3}
-        sx={{ flexGrow: 1, overflow: "hidden", minHeight: 0 }}
+        sx={{
+          height: "100%",
+          bgcolor: "background.default",
+          p: { xs: 2, md: 3 },
+          overflow: "hidden",
+        }}
       >
-        {/* Left Panel - Search Form */}
-        <Box
-          sx={{
-            width: { xs: "100%", md: 370 },
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            flexShrink: 0,
-          }}
-        >
-          <SRSearchForm onSearch={handleSearch} onReset={handleSearchReset} />
-        </Box>
-
-        {/* Right Panel - Data Grid */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            minWidth: 0,
-          }}
-        >
-          <SRDataGrid
-            rows={mockData}
-            columns={columns}
-            paginationModel={{ page: 0, pageSize: 10 }}
-            checkboxSelection
-          />
-        </Box>
-      </Stack>
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-      >
-        <MenuItem onClick={handleEdit}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t("srProcess.menu.edit")}</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDelete}>
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t("srProcess.menu.delete")}</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>{t("srProcess.dialog.deleteTitle")}</DialogTitle>
-        <DialogContent>
-          <Typography>
-            {t("srProcess.dialog.srNumber")}: {selectedSR?.srNumber}
-            <br />
-            {t("srProcess.dialog.title")}: {selectedSR?.srTitle}
-            <br />
-            <br />
-            {t("srProcess.dialog.confirmMessage")}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>
-            {t("srProcess.buttons.cancel")}
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
+        {/* Page Title */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
           >
-            {t("srProcess.buttons.delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+            {t("srProcess.title")}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.875rem",
+            }}
+          >
+            {t("srProcess.subtitle")}
+          </Typography>
+        </Box>
+
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={3}
+          sx={{ flexGrow: 1, overflow: "hidden", minHeight: 0 }}
+        >
+          {/* Left Panel - Search Form */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: 370 },
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              flexShrink: 0,
+            }}
+          >
+            <SRSearchForm onSearch={handleSearch} onReset={handleSearchReset} />
+          </Box>
+
+          {/* Right Panel - Data Grid */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              minWidth: 0,
+            }}
+          >
+            <SRDataGrid
+              rows={mockData}
+              columns={columns}
+              paginationModel={{ page: 0, pageSize: 10 }}
+              checkboxSelection
+            />
+          </Box>
+        </Stack>
+
+        {/* Action Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleCloseMenu}
+        >
+          <MenuItem onClick={handleEdit}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t("srProcess.menu.edit")}</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={handleDelete}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t("srProcess.menu.delete")}</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteDialog}>
+          <DialogTitle>{t("srProcess.dialog.deleteTitle")}</DialogTitle>
+          <DialogContent>
+            <Typography>
+              {t("srProcess.dialog.srNumber")}: {selectedSR?.srNumber}
+              <br />
+              {t("srProcess.dialog.title")}: {selectedSR?.srTitle}
+              <br />
+              <br />
+              {t("srProcess.dialog.confirmMessage")}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog}>
+              {t("srProcess.buttons.cancel")}
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              color="error"
+              variant="contained"
+            >
+              {t("srProcess.buttons.delete")}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Stack>
+    </RequirePermission>
   );
 }

@@ -25,6 +25,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
+import RequirePermission from "@/src/components/RequirePermission";
 import { DataGrid, GridColDef, GridPaginationModel } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -244,241 +245,243 @@ export default function SRRequestPage() {
   ];
 
   return (
-    <Stack
-      sx={{
-        height: "100vh",
-        bgcolor: "background.default",
-        p: { xs: 2, md: 3 },
-        overflow: "hidden",
-      }}
-    >
-      {/* Page Title and Register Button */}
+    <RequirePermission nodeId="sr-request">
       <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              letterSpacing: "-0.02em",
-              mb: 0.5,
-            }}
-          >
-            {t("srRequest.title")}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.875rem",
-            }}
-          >
-            {t("srRequest.subtitle")}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<EditIcon />}
-          onClick={handleRegister}
-          sx={{
-            borderRadius: 1.5,
-            textTransform: "none",
-            fontWeight: 500,
-            fontSize: "0.875rem",
-            px: 2.5,
-            boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
-            transition: "all 0.2s",
-            "&:hover": {
-              transform: "translateY(-1px)",
-              boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
-            },
-          }}
-        >
-          {t("srRequest.buttons.register")}
-        </Button>
-      </Stack>
-
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={3}
-        sx={{ flexGrow: 1, overflow: "hidden", minHeight: 0 }}
-      >
-        {/* Left Panel - Search Form */}
-        <Box
-          sx={{
-            width: { xs: "100%", md: 370 },
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            flexShrink: 0,
-          }}
-        >
-          <SRSearchForm onSearch={handleSearch} onReset={handleSearchReset} />
-        </Box>
-
-        {/* Right Panel - Data Table */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            minWidth: 0,
-          }}
-        >
-          {/* Data Grid */}
-          <SRDataGrid
-            rows={mockData}
-            columns={columns}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            checkboxSelection
-          />
-        </Box>
-      </Stack>
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-      >
-        <MenuItem onClick={handleEdit}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t("srRequest.menu.edit")}</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDelete}>
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t("srRequest.menu.delete")}</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={handleCloseDeleteDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2.5,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          },
+        sx={{
+          height: "100vh",
+          bgcolor: "background.default",
+          p: { xs: 2, md: 3 },
+          overflow: "hidden",
         }}
       >
-        <DialogTitle
-          sx={{
-            fontWeight: 600,
-            fontSize: "1.25rem",
-            pb: 1,
-          }}
+        {/* Page Title and Register Button */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 3 }}
         >
-          {t("srRequest.dialog.deleteTitle")}
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 3, pb: 2 }}>
-          <Stack spacing={2}>
-            <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontWeight: 500,
-                  mb: 0.5,
-                }}
-              >
-                {t("srRequest.dialog.srNumber")}
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  fontWeight: 500,
-                  color: "primary.main",
-                }}
-              >
-                {selectedSR?.srNumber}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontWeight: 500,
-                  mb: 0.5,
-                }}
-              >
-                {t("srRequest.dialog.title")}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {selectedSR?.srTitle}
-              </Typography>
-            </Box>
-            <Box
+          <Box>
+            <Typography
+              variant="h5"
               sx={{
-                mt: 2,
-                p: 2,
-                bgcolor: "error.lighter",
-                borderRadius: 1.5,
-                border: "1px solid",
-                borderColor: "error.light",
+                fontWeight: 700,
+                color: "text.primary",
+                letterSpacing: "-0.02em",
+                mb: 0.5,
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "error.dark",
-                  fontWeight: 500,
-                }}
-              >
-                {t("srRequest.dialog.confirmMessage")}
-              </Typography>
-            </Box>
-          </Stack>
-        </DialogContent>
-        <Divider />
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+              {t("srRequest.title")}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.875rem",
+              }}
+            >
+              {t("srRequest.subtitle")}
+            </Typography>
+          </Box>
           <Button
-            onClick={handleCloseDeleteDialog}
-            variant="outlined"
-            sx={{
-              borderRadius: 1.5,
-              textTransform: "none",
-              fontWeight: 500,
-              px: 3,
-            }}
-          >
-            {t("srRequest.buttons.cancel")}
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
             variant="contained"
+            size="small"
+            startIcon={<EditIcon />}
+            onClick={handleRegister}
             sx={{
               borderRadius: 1.5,
               textTransform: "none",
               fontWeight: 500,
-              px: 3,
-              boxShadow: "0 2px 8px rgba(211, 47, 47, 0.3)",
+              fontSize: "0.875rem",
+              px: 2.5,
+              boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
+              transition: "all 0.2s",
               "&:hover": {
-                boxShadow: "0 4px 12px rgba(211, 47, 47, 0.4)",
+                transform: "translateY(-1px)",
+                boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
               },
             }}
           >
-            {t("srRequest.buttons.delete")}
+            {t("srRequest.buttons.register")}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+        </Stack>
+
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={3}
+          sx={{ flexGrow: 1, overflow: "hidden", minHeight: 0 }}
+        >
+          {/* Left Panel - Search Form */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: 370 },
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              flexShrink: 0,
+            }}
+          >
+            <SRSearchForm onSearch={handleSearch} onReset={handleSearchReset} />
+          </Box>
+
+          {/* Right Panel - Data Table */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              minWidth: 0,
+            }}
+          >
+            {/* Data Grid */}
+            <SRDataGrid
+              rows={mockData}
+              columns={columns}
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              checkboxSelection
+            />
+          </Box>
+        </Stack>
+
+        {/* Action Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={handleEdit}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t("srRequest.menu.edit")}</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={handleDelete}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t("srRequest.menu.delete")}</ListItemText>
+          </MenuItem>
+        </Menu>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteConfirmOpen}
+          onClose={handleCloseDeleteDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2.5,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              fontWeight: 600,
+              fontSize: "1.25rem",
+              pb: 1,
+            }}
+          >
+            {t("srRequest.dialog.deleteTitle")}
+          </DialogTitle>
+          <Divider />
+          <DialogContent sx={{ pt: 3, pb: 2 }}>
+            <Stack spacing={2}>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 500,
+                    mb: 0.5,
+                  }}
+                >
+                  {t("srRequest.dialog.srNumber")}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: 500,
+                    color: "primary.main",
+                  }}
+                >
+                  {selectedSR?.srNumber}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 500,
+                    mb: 0.5,
+                  }}
+                >
+                  {t("srRequest.dialog.title")}
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {selectedSR?.srTitle}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: "error.lighter",
+                  borderRadius: 1.5,
+                  border: "1px solid",
+                  borderColor: "error.light",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "error.dark",
+                    fontWeight: 500,
+                  }}
+                >
+                  {t("srRequest.dialog.confirmMessage")}
+                </Typography>
+              </Box>
+            </Stack>
+          </DialogContent>
+          <Divider />
+          <DialogActions sx={{ p: 2, gap: 1 }}>
+            <Button
+              onClick={handleCloseDeleteDialog}
+              variant="outlined"
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                px: 3,
+              }}
+            >
+              {t("srRequest.buttons.cancel")}
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              color="error"
+              variant="contained"
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 500,
+                px: 3,
+                boxShadow: "0 2px 8px rgba(211, 47, 47, 0.3)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(211, 47, 47, 0.4)",
+                },
+              }}
+            >
+              {t("srRequest.buttons.delete")}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Stack>
+    </RequirePermission>
   );
 }

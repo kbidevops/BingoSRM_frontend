@@ -72,31 +72,10 @@ function RedirectToFirstAllowed() {
         typeof window !== "undefined" ? window.location.pathname : "/";
       if (pathname !== "/" && pathname !== "/login") return;
 
-      // If user has a saved lastPath, try to use it when allowed
-      const lastPath =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("lastPath")
-          : null;
-
       const nodeIdToRoute: Record<string, string> = {};
       Object.entries(routeToNodeId).forEach(([route, nid]) => {
         if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
       });
-
-      const routeToNode = (route: string): string | undefined =>
-        routeToNodeId[route];
-
-      if (lastPath) {
-        try {
-          const mappedNode = routeToNode(lastPath);
-          if (mappedNode && allowedNodeIds.has(mappedNode)) {
-            router.replace(lastPath);
-            return;
-          }
-        } catch (e) {
-          // ignore and fallback to first allowed
-        }
-      }
 
       const findFirst = (nodes: typeof menuTree): string | null => {
         for (const n of nodes) {

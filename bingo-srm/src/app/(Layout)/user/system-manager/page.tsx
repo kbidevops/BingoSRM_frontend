@@ -18,6 +18,7 @@ import {
   FormControlLabel,
   Grid,
 } from "@mui/material";
+import RequirePermission from "@/src/components/RequirePermission";
 import {
   fetchUsersByRole,
   fetchCodeTypes,
@@ -205,159 +206,173 @@ export default function SystemManager() {
   });
 
   return (
-    <Stack
-      sx={{
-        height: "100vh",
-        bgcolor: "background.default",
-        p: 3,
-        overflow: "hidden",
-      }}
-    >
-      {/* Page Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            color: "text.primary",
-            letterSpacing: "-0.02em",
-            mb: 0.5,
-          }}
-        >
-          {t("systemManager.title")}
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            fontSize: "0.875rem",
-          }}
-        >
-          {t("systemManager.subtitle")}
-        </Typography>
-      </Box>
-
+    <RequirePermission nodeId="system-mgr">
       <Stack
-        direction="row"
-        spacing={3}
-        sx={{ flexGrow: 1, overflow: "hidden" }}
+        sx={{
+          height: "100vh",
+          bgcolor: "background.default",
+          p: 3,
+          overflow: "hidden",
+        }}
       >
-        {/* Left Panel - Manager List */}
-        <Box sx={{ width: "60%", display: "flex", flexDirection: "column" }}>
-          {/* Search Section */}
-          <Box
+        {/* Page Header */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="h5"
             sx={{
-              bgcolor: "background.paper",
-              p: 2.5,
-              borderRadius: 2.5,
-              mb: 2,
-              border: "1px solid",
-              borderColor: "divider",
-              boxShadow:
-                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-              transition: "box-shadow 0.2s",
-              "&:hover": {
-                boxShadow:
-                  "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-              },
+              fontWeight: 700,
+              color: "text.primary",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
             }}
           >
-            <Stack spacing={2}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, minWidth: 120 }}
-                >
-                  {t("systemManager.managerList")}
-                </Typography>
-                <Button
-                  variant="contained"
+            {t("systemManager.title")}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.875rem",
+            }}
+          >
+            {t("systemManager.subtitle")}
+          </Typography>
+        </Box>
+
+        <Stack
+          direction="row"
+          spacing={3}
+          sx={{ flexGrow: 1, overflow: "hidden" }}
+        >
+          {/* Left Panel - Manager List */}
+          <Box sx={{ width: "60%", display: "flex", flexDirection: "column" }}>
+            {/* Search Section */}
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                p: 2.5,
+                borderRadius: 2.5,
+                mb: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                transition: "box-shadow 0.2s",
+                "&:hover": {
+                  boxShadow:
+                    "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                },
+              }}
+            >
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 600, minWidth: 120 }}
+                  >
+                    {t("systemManager.managerList")}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<RefreshIcon />}
+                    onClick={() => fetchManagers()}
+                    sx={{
+                      minWidth: 100,
+                      borderRadius: 1.5,
+                      textTransform: "none",
+                      fontWeight: 500,
+                      px: 2.5,
+                      boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
+                      },
+                    }}
+                  >
+                    {t("systemManager.buttons.refresh")}
+                  </Button>
+                </Stack>
+                {/* Search Bar */}
+                <TextField
+                  placeholder={t("systemManager.searchPlaceholder")}
                   size="small"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => fetchManagers()}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+                    ),
+                  }}
                   sx={{
-                    minWidth: 100,
-                    borderRadius: 1.5,
-                    textTransform: "none",
-                    fontWeight: 500,
-                    px: 2.5,
-                    boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      bgcolor: "background.default",
+                      height: "38px",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      "&.Mui-focused": {
+                        bgcolor: "background.paper",
+                      },
                     },
                   }}
-                >
-                  {t("systemManager.buttons.refresh")}
-                </Button>
+                />
+                <Typography variant="caption" color="text.secondary">
+                  총 {filteredManagers.length}명의 담당자
+                </Typography>
               </Stack>
-              {/* Search Bar */}
-              <TextField
-                placeholder={t("systemManager.searchPlaceholder")}
-                size="small"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.5,
-                    bgcolor: "background.default",
-                    height: "38px",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    "&.Mui-focused": {
-                      bgcolor: "background.paper",
-                    },
-                  },
-                }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                총 {filteredManagers.length}명의 담당자
-              </Typography>
-            </Stack>
-          </Box>
+            </Box>
 
-          {/* Manager List - Scrollable */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              overflow: "auto",
-              bgcolor: "background.paper",
-              borderRadius: 2.5,
-              border: "1px solid",
-              borderColor: "divider",
-              boxShadow:
-                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-            }}
-          >
-            <Stack
-              spacing={0}
-              divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}
+            {/* Manager List - Scrollable */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                overflow: "auto",
+                bgcolor: "background.paper",
+                borderRadius: 2.5,
+                border: "1px solid",
+                borderColor: "divider",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              }}
             >
-              {filteredManagers.map((manager) => (
-                <Box
-                  key={manager.id}
-                  sx={{
-                    cursor: "pointer",
-                    p: 2.5,
-                    bgcolor:
-                      selectedManager?.id === manager.id
-                        ? "primary.main"
-                        : "transparent",
-                    transition: "all 0.2s ease",
-                    position: "relative",
-                    "&:hover": {
+              <Stack
+                spacing={0}
+                divider={
+                  <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
+                }
+              >
+                {filteredManagers.map((manager) => (
+                  <Box
+                    key={manager.id}
+                    sx={{
+                      cursor: "pointer",
+                      p: 2.5,
                       bgcolor:
                         selectedManager?.id === manager.id
-                          ? "primary.dark"
-                          : "action.hover",
+                          ? "primary.main"
+                          : "transparent",
+                      transition: "all 0.2s ease",
+                      position: "relative",
+                      "&:hover": {
+                        bgcolor:
+                          selectedManager?.id === manager.id
+                            ? "primary.dark"
+                            : "action.hover",
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: "4px",
+                          bgcolor: "primary.main",
+                          opacity: selectedManager?.id === manager.id ? 0 : 1,
+                        },
+                      },
                       "&::before": {
                         content: '""',
                         position: "absolute",
@@ -366,229 +381,219 @@ export default function SystemManager() {
                         bottom: 0,
                         width: "4px",
                         bgcolor: "primary.main",
-                        opacity: selectedManager?.id === manager.id ? 0 : 1,
+                        opacity: selectedManager?.id === manager.id ? 1 : 0,
+                        transition: "opacity 0.2s",
                       },
-                    },
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: "4px",
-                      bgcolor: "primary.main",
-                      opacity: selectedManager?.id === manager.id ? 1 : 0,
-                      transition: "opacity 0.2s",
-                    },
+                    }}
+                    onClick={() => handleManagerSelect(manager)}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor:
+                            selectedManager?.id === manager.id
+                              ? "primary.dark"
+                              : manager.avatarColor,
+                          fontSize: "1rem",
+                          fontWeight: 600,
+                          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                          transition: "transform 0.2s",
+                          "&:hover": {
+                            transform: "scale(1.05)",
+                          },
+                        }}
+                      >
+                        {manager.displayName.substring(0, 2)}
+                      </Avatar>
+                      <Stack spacing={0.5} sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color:
+                                selectedManager?.id === manager.id
+                                  ? "primary.contrastText"
+                                  : "text.secondary",
+                              minWidth: 40,
+                            }}
+                          >
+                            {t("systemManager.labels.userId")}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color:
+                                selectedManager?.id === manager.id
+                                  ? "primary.contrastText"
+                                  : "text.primary",
+                            }}
+                          >
+                            {manager.userId}
+                          </Typography>
+                        </Stack>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="flex-start"
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color:
+                                selectedManager?.id === manager.id
+                                  ? "primary.contrastText"
+                                  : "text.secondary",
+                              minWidth: 40,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {t("systemManager.labels.role")}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontSize: "0.75rem",
+                              color:
+                                selectedManager?.id === manager.id
+                                  ? "primary.contrastText"
+                                  : "text.secondary",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            {manager.permissions.length > 0
+                              ? manager.permissions.join(" , ")
+                              : "-"}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Box>
+
+          {/* Right Panel - Permission Assignment */}
+          <Box
+            sx={{
+              width: "40%",
+              bgcolor: "background.paper",
+              borderRadius: 2.5,
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow:
+                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {t("systemManager.permissionAssignment")}
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<CheckIcon />}
+                onClick={handleSave}
+                sx={{
+                  minWidth: 100,
+                  borderRadius: 1.5,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  px: 3,
+                  boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
+                  },
+                }}
+              >
+                {t("systemManager.buttons.save")}
+              </Button>
+            </Stack>
+
+            {selectedManager && (
+              <>
+                <Box
+                  sx={{
+                    mb: 3,
+                    p: 2,
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                    borderRadius: 1.5,
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                   }}
-                  onClick={() => handleManagerSelect(manager)}
                 >
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {selectedManager.displayName}({selectedManager.userId})
+                  </Typography>
+                </Box>
+
+                {/* Permission Checkboxes in 2 columns */}
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 2,
+                  }}
+                >
+                  {systemPermissions.map((permission) => (
+                    <Box
+                      key={permission.id}
                       sx={{
-                        width: 48,
-                        height: 48,
-                        bgcolor:
-                          selectedManager?.id === manager.id
-                            ? "primary.dark"
-                            : manager.avatarColor,
-                        fontSize: "1rem",
-                        fontWeight: 600,
-                        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                        transition: "transform 0.2s",
+                        p: 1,
+                        borderRadius: 1,
+                        transition: "all 0.2s",
                         "&:hover": {
-                          transform: "scale(1.05)",
+                          bgcolor: "action.hover",
                         },
                       }}
                     >
-                      {manager.displayName.substring(0, 2)}
-                    </Avatar>
-                    <Stack spacing={0.5} sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color:
-                              selectedManager?.id === manager.id
-                                ? "primary.contrastText"
-                                : "text.secondary",
-                            minWidth: 40,
-                          }}
-                        >
-                          {t("systemManager.labels.userId")}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                            color:
-                              selectedManager?.id === manager.id
-                                ? "primary.contrastText"
-                                : "text.primary",
-                          }}
-                        >
-                          {manager.userId}
-                        </Typography>
-                      </Stack>
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        alignItems="flex-start"
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color:
-                              selectedManager?.id === manager.id
-                                ? "primary.contrastText"
-                                : "text.secondary",
-                            minWidth: 40,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {t("systemManager.labels.role")}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: "0.75rem",
-                            color:
-                              selectedManager?.id === manager.id
-                                ? "primary.contrastText"
-                                : "text.secondary",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                          }}
-                        >
-                          {manager.permissions.length > 0
-                            ? manager.permissions.join(" , ")
-                            : "-"}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                  </Stack>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectedPermissions.includes(
+                              permission.label,
+                            )}
+                            onChange={() =>
+                              handlePermissionToggle(permission.label)
+                            }
+                            size="small"
+                          />
+                        }
+                        label={
+                          <Typography
+                            variant="body2"
+                            sx={{ fontSize: "0.875rem" }}
+                          >
+                            {permission.label}
+                          </Typography>
+                        }
+                        sx={{ m: 0 }}
+                      />
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Stack>
+              </>
+            )}
           </Box>
-        </Box>
-
-        {/* Right Panel - Permission Assignment */}
-        <Box
-          sx={{
-            width: "40%",
-            bgcolor: "background.paper",
-            borderRadius: 2.5,
-            p: 3,
-            display: "flex",
-            flexDirection: "column",
-            border: "1px solid",
-            borderColor: "divider",
-            boxShadow:
-              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-          }}
-        >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 3 }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {t("systemManager.permissionAssignment")}
-            </Typography>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<CheckIcon />}
-              onClick={handleSave}
-              sx={{
-                minWidth: 100,
-                borderRadius: 1.5,
-                textTransform: "none",
-                fontWeight: 500,
-                px: 3,
-                boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.1)",
-                transition: "all 0.2s",
-                "&:hover": {
-                  transform: "translateY(-1px)",
-                  boxShadow: "0 6px 12px 0 rgba(0, 0, 0, 0.15)",
-                },
-              }}
-            >
-              {t("systemManager.buttons.save")}
-            </Button>
-          </Stack>
-
-          {selectedManager && (
-            <>
-              <Box
-                sx={{
-                  mb: 3,
-                  p: 2,
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                  borderRadius: 1.5,
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                }}
-              >
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {selectedManager.displayName}({selectedManager.userId})
-                </Typography>
-              </Box>
-
-              {/* Permission Checkboxes in 2 columns */}
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: 2,
-                }}
-              >
-                {systemPermissions.map((permission) => (
-                  <Box
-                    key={permission.id}
-                    sx={{
-                      p: 1,
-                      borderRadius: 1,
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                      },
-                    }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedPermissions.includes(
-                            permission.label,
-                          )}
-                          onChange={() =>
-                            handlePermissionToggle(permission.label)
-                          }
-                          size="small"
-                        />
-                      }
-                      label={
-                        <Typography
-                          variant="body2"
-                          sx={{ fontSize: "0.875rem" }}
-                        >
-                          {permission.label}
-                        </Typography>
-                      }
-                      sx={{ m: 0 }}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </>
-          )}
-        </Box>
+        </Stack>
       </Stack>
-    </Stack>
+    </RequirePermission>
   );
 }

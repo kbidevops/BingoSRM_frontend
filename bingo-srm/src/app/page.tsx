@@ -9,23 +9,62 @@ export default function Home() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // First, try to redirect back to the last visited path (if any)
-    try {
-      const last = localStorage.getItem("lastPath");
-      if (last && last !== "/" && last !== window.location.pathname) {
-        router.replace(last);
-        return;
-      }
-    } catch (e) {
-      // ignore storage errors
-    }
-
-    // Only redirect to login when the user is NOT authenticated
+    // Only proceed if user is authenticated; otherwise send to login
     if (!isAuthenticated()) {
       router.push("/login");
+      setChecking(false);
+      return;
     }
 
-    // hide checking indicator after navigation attempt
+    // If authenticated and at root, fetch assigned menus and redirect
+    // to the first menu the user is allowed to access (by menuTree order).
+    const go = async () => {
+      try {
+        const { fetchAssignedMenus } = await import("@/src/lib/auth");
+        const perms = await import("@/src/lib/permissions");
+
+        const assigned = await fetchAssignedMenus();
+        const { allowedNodeIds } = perms.mapAssignedRowsToAllowed(
+          assigned || [],
+        );
+
+        const nodeIdToRoute: Record<string, string> = {};
+        Object.entries(perms.routeToNodeId).forEach(([route, nid]) => {
+          if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
+        });
+
+        const findFirst = (nodes: typeof perms.menuTree): string | null => {
+          for (const n of nodes) {
+            if (allowedNodeIds.has(n.id)) {
+              if (nodeIdToRoute[n.id]) return nodeIdToRoute[n.id];
+            }
+            if (n.children) {
+              const r = findFirst(n.children as any);
+              if (r) return r;
+            }
+          }
+          return null;
+        };
+
+        const target = findFirst(perms.menuTree as any);
+        if (target) {
+          router.replace(target);
+          return;
+        }
+      } catch (e) {
+        console.error("redirect-to-first-allowed failed:", e);
+      }
+    };
+
+    // only attempt when at root path
+    const currentPath =
+      typeof window !== "undefined" ? window.location.pathname : "/";
+    if (currentPath === "/" || currentPath === "") {
+      go().finally(() => setChecking(false));
+      return;
+    }
+
+    // hide checking indicator after navigation attempt for non-root
     setChecking(false);
   }, [router]);
 
