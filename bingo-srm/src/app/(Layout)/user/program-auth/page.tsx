@@ -16,12 +16,14 @@ import {
   Collapse,
   IconButton,
 } from "@mui/material";
+import { useRouter } from "next/navigation";
 import {
   fetchProgramAccessAll,
   updateProgramAccess,
   fetchCodeTypes,
   fetchProgramAccessAssigned,
 } from "@/src/lib/auth";
+import usePermissions from "@/src/hooks/usePermissions";
 import { menuTree, legacyToNextRoute, routeToNodeId, normalizeUri, MenuNode } from "@/src/lib/permissions";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -176,6 +178,19 @@ export default function ProgramAuth() {
     new Set(["itsm", "basic-info", "member-join"]),
   );
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
+
+  const router = useRouter();
+  const { allowedNodeIds, loading: permissionsLoading } = usePermissions();
+
+  // Protect this page: if permissions have loaded and user lacks program-auth, redirect
+  React.useEffect(() => {
+    if (!permissionsLoading) {
+      if (!allowedNodeIds.has("program-auth")) {
+        // redirect to home or first allowed page
+        router.replace("/");
+      }
+    }
+  }, [permissionsLoading, allowedNodeIds, router]);
 
   const handleRoleSelect = (role: Role) => {
     // Prevent duplicate requests for the same role
