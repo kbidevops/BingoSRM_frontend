@@ -1,11 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  createTheme,
-  CssBaseline,
-  ThemeProvider as MuiThemeProvider,
-} from "@mui/material";
+import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material";
 import { ThemeProvider as NextThemeProvider, useTheme } from "next-themes";
 import { getDesignTokens } from "./theme";
 
@@ -15,15 +11,10 @@ function MuiThemeWrapper({ children }: { children: React.ReactNode }) {
   const theme = React.useMemo(
     () =>
       createTheme(getDesignTokens(resolvedTheme === "dark" ? "dark" : "light")),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
-  return (
-    <MuiThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </MuiThemeProvider>
-  );
+  return <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
