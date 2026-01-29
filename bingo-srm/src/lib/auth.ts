@@ -148,6 +148,33 @@ export async function fetchProgramAccessAll(
   return [];
 }
 
+// Fetch program access for a specific authority using the assigned endpoint
+export async function fetchProgramAccessAssigned(
+  authorCode: string,
+): Promise<ProgramAccessItem[]> {
+  const url = `${API_BASE_URL}/api/v1/program-access/${encodeURIComponent(
+    authorCode,
+  )}/assigned`;
+  const userTyCode = localStorage.getItem("userTyCode") || "";
+  const res = await authFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Ty-Code": userTyCode,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch program access (assigned): ${res.statusText}`,
+    );
+  }
+  const data = await res.json();
+  if (Array.isArray(data)) return data as ProgramAccessItem[];
+  if (Array.isArray((data as any).resultList)) return (data as any).resultList;
+  if (Array.isArray((data as any).data)) return (data as any).data;
+  return [];
+}
+
 // Update assigned programs for an authority
 export async function updateProgramAccess(
   authorCode: string,
@@ -156,7 +183,8 @@ export async function updateProgramAccess(
   const url = `${API_BASE_URL}/api/v1/program-access/${encodeURIComponent(
     authorCode,
   )}`;
-  const body = { programIds: assignedProgramIds };
+  // Backend expects payload key "progrmSns" with array of program IDs
+  const body = { progrmSns: assignedProgramIds };
   const res = await authFetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

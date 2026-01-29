@@ -20,6 +20,7 @@ import {
   fetchProgramAccessAll,
   updateProgramAccess,
   fetchCodeTypes,
+  fetchProgramAccessAssigned,
 } from "@/src/lib/auth";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -228,6 +229,9 @@ export default function ProgramAuth() {
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [nodeToProgrmSn, setNodeToProgrmSn] = React.useState<
+    Record<string, string>
+  >({});
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
     new Set(["itsm", "basic-info", "member-join"]),
   );
@@ -256,7 +260,7 @@ export default function ProgramAuth() {
     if (loadingRole === authorCode) return;
     setLoadingRole(authorCode);
     try {
-      const all = await fetchProgramAccessAll(authorCode);
+      const all = await fetchProgramAccessAssigned(authorCode);
 
       // Debug: inspect fetched payload and basic counts
       const yCount = all.filter((p) => (p as any).menuIndictYn === "Y").length;
@@ -298,16 +302,24 @@ export default function ProgramAuth() {
       );
 
       // Then apply strict URI-only mapping on the filtered set
+      const mapping: Record<string, string> = {};
       relevant.forEach((p) => {
         const uri = (p as any).progrmUri;
         console.debug("[program-auth] processing", uri);
         console.debug("p.menuIndictYn: ", p.menuIndictYn);
+        const nodeId = routeToNodeId[legacyToNextRoute[uri]];
+        if (!nodeId) return;
+        // store mapping from our UI node id -> backend progrmSn (if present)
+        const progrmSn =
+          (p as any).progrmSn ??
+          (p as any).progrmId ??
+          (p as any).progrmSno ??
+          null;
+        if (progrmSn != null) mapping[nodeId] = String(progrmSn);
         if ((p as any).menuIndictYn === "Y") {
-          const nodeId = routeToNodeId[legacyToNextRoute[uri]];
-          if (nodeId) assignedNodeIds.add(nodeId);
+          assignedNodeIds.add(nodeId);
         } else if ((p as any).menuIndictYn === "N") {
-          const nodeId = routeToNodeId[legacyToNextRoute[uri]];
-          if (nodeId) explicitUncheckIds.add(nodeId);
+          explicitUncheckIds.add(nodeId);
         }
       });
 
@@ -368,8 +380,8 @@ export default function ProgramAuth() {
         }
       };
       updateCheckedOnTree(menuTree);
-
       setCheckedItems(assignedNodeIds);
+      setNodeToProgrmSn(mapping);
     } finally {
       setLoadingRole(null);
     }
@@ -384,7 +396,11 @@ export default function ProgramAuth() {
         if (!mounted) return;
         // Filter out roles we don't want to display (기관담당자, 상담센터)
         const filtered = codes.filter((c) => {
-          const name = ((c.cmmnCodeNm as string) || (c.cmmnCodeDc as string) || "").trim();
+          const name = (
+            (c.cmmnCodeNm as string) ||
+            (c.cmmnCodeDc as string) ||
+            ""
+          ).trim();
           return name !== "기관담당자" && name !== "상담센터";
         });
         const mapped: Role[] = filtered.map((c) => ({
@@ -399,7 +415,10 @@ export default function ProgramAuth() {
           try {
             await loadProgramAccessForRole(mapped[0].id);
           } catch (err) {
-            console.error("Failed to load program access for default role", err);
+            console.error(
+              "Failed to load program access for default role",
+              err,
+            );
           }
         }
       } catch (err) {
@@ -476,8 +495,13 @@ export default function ProgramAuth() {
     const assigned = Array.from(checkedItems);
     console.log("Saving permissions for", selectedRole?.name, assigned);
     if (!selectedRole) return;
+    // Map checked UI node ids to backend progrmSn values
+    const progrmSns = assigned
+      .map((id) => nodeToProgrmSn[id])
+      .filter((v): v is string => typeof v === "string" && v.length > 0);
+    console.debug("Mapped progrmSns to send:", progrmSns);
     // call PUT /api/v1/program-access/{authorCode}
-    updateProgramAccess(selectedRole.id, assigned)
+    updateProgramAccess(selectedRole.id, progrmSns)
       .then((res) => {
         console.log("Update result", res);
         // Optionally show success snackbar
@@ -561,14 +585,17 @@ export default function ProgramAuth() {
                 key={role.id}
                 sx={{
                   cursor: "pointer",
-                  bgcolor: selectedRole?.id === role.id ? "primary.main" : role.color,
+                  bgcolor:
+                    selectedRole?.id === role.id ? "primary.main" : role.color,
                   border: "2px solid",
-                  borderColor: selectedRole?.id === role.id ? "primary.main" : "divider",
+                  borderColor:
+                    selectedRole?.id === role.id ? "primary.main" : "divider",
                   borderRadius: 2.5,
                   transition: "all 0.2s ease",
-                  boxShadow: selectedRole?.id === role.id
-                    ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-                    : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                  boxShadow:
+                    selectedRole?.id === role.id
+                      ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                      : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                   "&:hover": {
                     transform: "translateY(-4px)",
                     boxShadow:
@@ -592,7 +619,10 @@ export default function ProgramAuth() {
                     sx={{
                       position: "relative",
                       mb: 2,
-                      color: selectedRole?.id === role.id ? "white" : "text.secondary",
+                      color:
+                        selectedRole?.id === role.id
+                          ? "white"
+                          : "text.secondary",
                     }}
                   >
                     <PersonIcon sx={{ fontSize: 48 }} />
@@ -646,7 +676,7 @@ export default function ProgramAuth() {
               variant="h6"
               sx={{ fontWeight: 600, fontSize: "1.1rem" }}
             >
-                <Box component="span" sx={{ color: "primary.main" }}>
+              <Box component="span" sx={{ color: "primary.main" }}>
                 {selectedRole?.name ?? ""}
               </Box>{" "}
               {t("programAccess.accessControl")}
