@@ -23,12 +23,17 @@ export const PermissionsProvider: React.FC<{
 }> = ({ authorCode, children }) => {
   const [allowedNodeIds] = React.useState<Set<string>>(new Set());
   const [allowedProgrmSns] = React.useState<Set<string>>(new Set());
-  const [loading, setLoading] = React.useState<boolean>(false);
+  // start in loading state so consumers don't assume permissions are ready
+  const [loading, setLoading] = React.useState<boolean>(true);
 
   React.useEffect(() => {
     let mounted = true;
     const load = async () => {
-      if (!authorCode) return;
+      if (!authorCode) {
+        // no authorCode -> nothing to load, mark as not loading
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const assigned = await fetchProgramAccessAssigned(authorCode);

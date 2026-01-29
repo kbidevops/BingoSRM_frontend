@@ -196,6 +196,10 @@
       "save": "저장"
     }
   },
+  "unauthorized": {
+    "title": "접근 권한이 없습니다",
+    "message": "이 페이지에 접근할 권한이 없습니다. 다른 작업을 선택해 주세요."
+  },
   "srRequest": {
     "title": "SR요청",
     "subtitle": "서비스 요청을 등록하고 관리합니다",

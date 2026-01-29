@@ -186,11 +186,19 @@ export default function ProgramAuth() {
   React.useEffect(() => {
     if (!permissionsLoading) {
       if (!allowedNodeIds.has("program-auth")) {
-        // redirect to home or first allowed page
-        router.replace("/");
+        // redirect to unauthorized page when user lacks program-auth
+        router.replace("/unauthorized");
       }
     }
   }, [permissionsLoading, allowedNodeIds, router]);
+
+  // Prevent rendering the page content until permissions are known
+  if (permissionsLoading) {
+    return null;
+  }
+
+  // If permissions are loaded and user lacks access, avoid rendering while redirect occurs
+  if (!allowedNodeIds.has("program-auth")) return null;
 
   const handleRoleSelect = (role: Role) => {
     // Prevent duplicate requests for the same role
