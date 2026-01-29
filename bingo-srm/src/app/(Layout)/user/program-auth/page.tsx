@@ -232,6 +232,14 @@ export default function ProgramAuth() {
   const [nodeToProgrmSn, setNodeToProgrmSn] = React.useState<
     Record<string, string>
   >({});
+  const [nameToProgrmSn, setNameToProgrmSn] = React.useState<
+    Record<string, string>
+  >({});
+  const [assignedProgrmSns, setAssignedProgrmSns] = React.useState<Set<string>>(
+    new Set(),
+  );
+  const [explicitUncheckProgrmSns, setExplicitUncheckProgrmSns] =
+    React.useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
     new Set(["itsm", "basic-info", "member-join"]),
   );
@@ -273,6 +281,17 @@ export default function ProgramAuth() {
       });
       console.debug("[program-auth] sample rows", all.slice(0, 6));
 
+      // attempt to fetch the full program list (may include progrmSn fields)
+      let fullList: any[] = [];
+      try {
+        fullList = await fetchProgramAccessAll(authorCode);
+      } catch (err) {
+        console.debug(
+          "[program-auth] fetchProgramAccessAll failed, skipping fullList",
+          err,
+        );
+      }
+
       const assignedNodeIds = new Set<string>();
       const explicitUncheckIds = new Set<string>();
 
@@ -290,37 +309,161 @@ export default function ProgramAuth() {
         return null;
       };
 
-      // First filter backend list to only rows with a legacy URI mapping (remove unnecessary items)
-      const relevant = all.filter((p) => {
-        const uri = (p as any).progrmUri || (p as any).programUri;
-        return legacyToNextRoute[uri];
-      });
-
-      console.debug(
-        "[program-auth] relevant (has legacy mapping) count",
-        relevant.length,
-      );
-
-      // Then apply strict URI-only mapping on the filtered set
+      // Build mapping using multiple strategies: URI candidates, name match, and fullList fallback
       const mapping: Record<string, string> = {};
-      relevant.forEach((p) => {
-        const uri = (p as any).progrmUri;
-        console.debug("[program-auth] processing", uri);
-        console.debug("p.menuIndictYn: ", p.menuIndictYn);
-        const nodeId = routeToNodeId[legacyToNextRoute[uri]];
-        if (!nodeId) return;
-        // store mapping from our UI node id -> backend progrmSn (if present)
-        const progrmSn =
+      const nameMap: Record<string, string> = {};
+
+      const normalize = (u: any) => {
+        if (!u || typeof u !== "string") return "";
+        const idx = u.indexOf("?");
+        return (idx >= 0 ? u.slice(0, idx) : u).trim();
+      };
+
+      // iterate over assigned rows and try to resolve UI node id and progrmSn
+      const assignedProgrmSnsLocal = new Set<string>();
+      const explicitUncheckProgrmSnsLocal = new Set<string>();
+      all.forEach((p) => {
+        const candidates = [
+          (p as any).progrmUri,
+          (p as any).programUri,
+          (p as any).progrmUrl,
+          (p as any).programUrl,
+          (p as any).progrmPath,
+          (p as any).menuUrl,
+          (p as any).uri,
+        ].map(normalize);
+
+        let nodeId: string | null = null;
+        for (const c of candidates) {
+          if (!c) continue;
+          const nextRoute = legacyToNextRoute[c];
+          if (nextRoute) {
+            const nid = routeToNodeId[nextRoute];
+            if (nid) {
+              nodeId = nid;
+              break;
+            }
+          }
+        }
+
+        // fallback: try to match by program/menu name
+        if (!nodeId) {
+          const nameCandidate =
+            (p as any).programNm ||
+            (p as any).progrmNm ||
+            (p as any).programName ||
+            "";
+          if (nameCandidate) {
+            const byName = findNodeIdByName(
+              menuTree,
+              String(nameCandidate).trim(),
+            );
+            if (byName) nodeId = byName;
+          }
+        }
+
+        // try to use fullList to derive nodeId or progrmSn when missing
+        if (!nodeId && Array.isArray(fullList) && fullList.length > 0) {
+          for (const q of fullList) {
+            const qCandidates = [
+              (q as any).progrmUri,
+              (q as any).programUri,
+              (q as any).progrmUrl,
+              (q as any).programUrl,
+            ].map(normalize);
+            let matched = false;
+            for (const qc of qCandidates) {
+              if (!qc) continue;
+              if (candidates.includes(qc)) {
+                const nextRoute = legacyToNextRoute[qc];
+                if (nextRoute) {
+                  const nid = routeToNodeId[nextRoute];
+                  if (nid) {
+                    nodeId = nid;
+                    matched = true;
+                    break;
+                  }
+                }
+              }
+            }
+            if (matched) break;
+            // try name match on full list
+            const qName =
+              (q as any).programNm ||
+              (q as any).programName ||
+              (q as any).progrmNm;
+            if (qName) {
+              const byName = findNodeIdByName(menuTree, String(qName).trim());
+              if (byName) {
+                nodeId = byName;
+                break;
+              }
+            }
+          }
+        }
+
+        if (!nodeId) return; // cannot map this assigned row to a UI node
+
+        // determine progrmSn via several possible fields
+        let progrmSn =
           (p as any).progrmSn ??
           (p as any).progrmId ??
           (p as any).progrmSno ??
           null;
-        if (progrmSn != null) mapping[nodeId] = String(progrmSn);
-        if ((p as any).menuIndictYn === "Y") {
-          assignedNodeIds.add(nodeId);
-        } else if ((p as any).menuIndictYn === "N") {
-          explicitUncheckIds.add(nodeId);
+
+        // if missing, try to find in fullList by name or uri
+        if (
+          (progrmSn == null || progrmSn === "") &&
+          Array.isArray(fullList) &&
+          fullList.length > 0
+        ) {
+          const nameCandidate =
+            (p as any).programNm ||
+            (p as any).progrmNm ||
+            (p as any).programName ||
+            "";
+          const match = fullList.find((q) => {
+            const qName = String(
+              (q as any).programNm || (q as any).progrmNm || "",
+            ).trim();
+            if (
+              qName &&
+              nameCandidate &&
+              qName === String(nameCandidate).trim()
+            )
+              return true;
+            const qcands = [
+              (q as any).progrmUri,
+              (q as any).programUri,
+              (q as any).progrmUrl,
+              (q as any).programUrl,
+            ].map(normalize);
+            const firstCandidate = candidates.find(Boolean);
+            if (firstCandidate && qcands.includes(firstCandidate)) return true;
+            return false;
+          });
+          if (match) {
+            progrmSn =
+              (match as any).progrmSn ??
+              (match as any).progrmId ??
+              (match as any).progrmSno ??
+              null;
+          }
         }
+
+        if (progrmSn != null) {
+          mapping[nodeId] = String(progrmSn);
+          const matchedNode = findNodeById(menuTree, nodeId);
+          if (matchedNode) nameMap[matchedNode.name] = String(progrmSn);
+          if ((p as any).menuIndictYn === "Y")
+            assignedProgrmSnsLocal.add(String(progrmSn));
+          else if ((p as any).menuIndictYn === "N")
+            explicitUncheckProgrmSnsLocal.add(String(progrmSn));
+        }
+
+        if ((p as any).menuIndictYn === "Y") assignedNodeIds.add(nodeId);
+        else if ((p as any).menuIndictYn === "N")
+          explicitUncheckIds.add(nodeId);
       });
 
       console.debug(
@@ -334,6 +477,15 @@ export default function ProgramAuth() {
 
       // Final checked set = assigned - explicit unchecks
       explicitUncheckIds.forEach((id) => assignedNodeIds.delete(id));
+
+      // remove any progrmSns that were explicitly unchecked
+      explicitUncheckProgrmSnsLocal.forEach((sn) =>
+        assignedProgrmSnsLocal.delete(sn),
+      );
+
+      // persist sets into state for later use/debugging
+      setAssignedProgrmSns(assignedProgrmSnsLocal);
+      setExplicitUncheckProgrmSns(explicitUncheckProgrmSnsLocal);
 
       // Ensure parent folder nodes are also checked when a child is assigned.
       const getPathToNode = (targetId: string): string[] => {
@@ -382,6 +534,7 @@ export default function ProgramAuth() {
       updateCheckedOnTree(menuTree);
       setCheckedItems(assignedNodeIds);
       setNodeToProgrmSn(mapping);
+      setNameToProgrmSn(nameMap);
     } finally {
       setLoadingRole(null);
     }
@@ -491,24 +644,114 @@ export default function ProgramAuth() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const assigned = Array.from(checkedItems);
-    console.log("Saving permissions for", selectedRole?.name, assigned);
+
     if (!selectedRole) return;
-    // Map checked UI node ids to backend progrmSn values
-    const progrmSns = assigned
-      .map((id) => nodeToProgrmSn[id])
-      .filter((v): v is string => typeof v === "string" && v.length > 0);
+    // Build progrmSn set: accept checked items that are already progrmSn,
+    // map node ids -> progrmSn, expand folder nodes to descendant progrmSns,
+    // and fallback to name-based mapping. Deduplicate results.
+    const progrmSnsSet = new Set<string>();
+    const missing: string[] = [];
+
+    const allMappedValues = new Set<string>(Object.values(nodeToProgrmSn));
+
+    for (const id of assigned) {
+      // If the checked value is already a progrmSn reported by server, accept it
+      if (assignedProgrmSns.has(id) || allMappedValues.has(id)) {
+        progrmSnsSet.add(id);
+        continue;
+      }
+
+      const byId = nodeToProgrmSn[id];
+      if (byId) {
+        progrmSnsSet.add(byId);
+        continue;
+      }
+
+      // If it's a folder or unmapped node, try to collect descendant progrmSns
+      const node = findNodeById(menuTree, id);
+      let found = false;
+      if (node) {
+        const desc = getAllDescendantIds(node);
+        for (const d of desc) {
+          const v = nodeToProgrmSn[d];
+          if (v) {
+            progrmSnsSet.add(v);
+            found = true;
+          }
+        }
+        if (found) continue;
+
+        // fallback to name-based mapping
+        const byName = nameToProgrmSn[node.name];
+        if (byName) {
+          progrmSnsSet.add(byName);
+          continue;
+        }
+      }
+
+      // nothing matched for this id
+      missing.push(id);
+    }
+
+    if (missing.length > 0) {
+      console.warn("[program-auth] missing mapping for node ids:", missing);
+      // Try to fetch a fresh full list and resolve missing by name as a last resort
+      try {
+        const fresh = await fetchProgramAccessAll(selectedRole.id);
+        for (const id of [...missing]) {
+          const node = findNodeById(menuTree, id);
+          if (!node) continue;
+          const name = node.name;
+          const match = (fresh || []).find((q: any) => {
+            const qName = String(
+              q.programNm ?? q.progrmNm ?? q.programName ?? "",
+            ).trim();
+            if (qName && qName === name) return true;
+            // try url-based match if available
+            const uCandidates = [
+              q.progrmUri,
+              q.programUri,
+              q.progrmUrl,
+              q.programUrl,
+            ]
+              .filter(Boolean)
+              .map((u: any) => String(u).split("?")[0]);
+            for (const uc of uCandidates) {
+              const nextRoute = legacyToNextRoute[uc];
+              if (nextRoute && routeToNodeId[nextRoute] === id) return true;
+            }
+            return false;
+          });
+          if (match) {
+            const sn =
+              match.progrmSn ?? match.progrmId ?? match.progrmSno ?? null;
+            if (sn) {
+              progrmSnsSet.add(String(sn));
+              // remove from missing
+              const idx = missing.indexOf(id);
+              if (idx >= 0) missing.splice(idx, 1);
+            }
+          }
+        }
+      } catch (err) {
+        console.debug(
+          "[program-auth] fetchProgramAccessAll during save failed",
+          err,
+        );
+      }
+    }
+
+    const progrmSns = Array.from(progrmSnsSet);
     console.debug("Mapped progrmSns to send:", progrmSns);
     // call PUT /api/v1/program-access/{authorCode}
-    updateProgramAccess(selectedRole.id, progrmSns)
-      .then((res) => {
-        console.log("Update result", res);
-        // Optionally show success snackbar
-      })
-      .catch((err) => {
-        console.error("Failed to update program access", err);
-      });
+    try {
+      const res = await updateProgramAccess(selectedRole.id, progrmSns);
+      console.log("Update result", res);
+    } catch (err) {
+      console.error("Failed to update program access", err);
+    }
   };
 
   return (
