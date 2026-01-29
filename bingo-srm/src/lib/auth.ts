@@ -1,5 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090";
 import { authFetch } from "./authFetch";
+import { mapAssignedRowsToAllowed } from "./permissions";
 
 export interface LoginRequest {
   userId: string;
@@ -43,17 +44,45 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     localStorage.setItem("expiresIn", data.expiresIn.toString());
     localStorage.setItem("refreshExpiresIn", data.refreshExpiresIn.toString());
     localStorage.setItem("tokenSetTime", Date.now().toString());
-    // Optionally store assigned if needed
-    localStorage.setItem("assigned", JSON.stringify(data.assigned));
+    // Filter assigned menus to only those that map to our UI menu nodes
+    try {
+      const assignedList = Array.isArray(data.assigned) ? data.assigned : [];
+      const filtered = assignedList.filter((p) => {
+        const m = mapAssignedRowsToAllowed([p], []);
+        return m.allowedNodeIds.size > 0 || m.allowedProgrmSns.size > 0;
+      });
+      localStorage.setItem("assigned", JSON.stringify(filtered));
+    } catch (e) {
+      // If filtering fails for any reason, fall back to storing original assigned
+      localStorage.setItem("assigned", JSON.stringify(data.assigned));
+    }
   }
 
   return data;
 }
 
 export function logout() {
-  localStorage.removeItem("userId");
-  localStorage.removeItem("userTyCode");
-  localStorage.removeItem("isAuthenticated");
+  // Clear authentication and session-related keys to fully log the user out.
+  const keysToRemove = [
+    "accessToken",
+    "assigned",
+    "expiresIn",
+    "isAuthenticated",
+    "lastPath",
+    "refreshExpiresIn",
+    "refreshToken",
+    "theme",
+    "tokenSetTime",
+    "tokenType",
+    "userId",
+    "userTyCode",
+  ];
+  try {
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    // swallow storage errors (e.g., in private mode) and proceed
+    console.warn("logout: failed to clear some localStorage keys", e);
+  }
 }
 
 export function isAuthenticated(): boolean {

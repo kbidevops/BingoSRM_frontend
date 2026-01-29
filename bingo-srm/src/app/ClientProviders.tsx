@@ -3,6 +3,7 @@ import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@/src/lib/createEmotionCache";
 
 import React, { ReactNode, useMemo, useState } from "react";
+
 import {
   CssBaseline,
   PaletteMode,
@@ -31,6 +32,47 @@ export default function ClientProviders({ children }: Props) {
   );
 
   const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+  function RedirectToFirstAllowed() {
+    const { allowedNodeIds, loading: permissionsLoading } = usePermissions();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (permissionsLoading) return;
+      if (!isAuthenticated()) return;
+      try {
+        const pathname = window.location.pathname;
+        if (pathname !== "/" && pathname !== "/login") return;
+
+        // build nodeId -> route map from routeToNodeId
+        const nodeIdToRoute: Record<string, string> = {};
+        Object.entries(routeToNodeId).forEach(([route, nid]) => {
+          if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
+        });
+
+        const findFirst = (nodes: typeof menuTree): string | null => {
+          for (const n of nodes) {
+            if (allowedNodeIds.has(n.id)) {
+              if (nodeIdToRoute[n.id]) return nodeIdToRoute[n.id];
+              // if folder, try descendants
+            }
+            if (n.children) {
+              const r = findFirst(n.children as any);
+              if (r) return r;
+            }
+          }
+          return null;
+        };
+
+        const target = findFirst(menuTree);
+        if (target) router.replace(target);
+      } catch (e) {
+        // ignore
+      }
+    }, [permissionsLoading, allowedNodeIds, router]);
+
+    return null;
+  }
 
   return (
     <CacheProvider value={clientSideEmotionCache}>

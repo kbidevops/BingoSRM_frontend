@@ -16,6 +16,7 @@ import {
 import LeftNavbarAppGroup from "./LeftNavbarAppGroup";
 import BingoPng from "@/public/BingoSRM.png";
 import { usePathname, useRouter } from "next/navigation";
+import { logout } from "@/src/lib/auth";
 import { NavbarIcon } from "@/src/components/common/pure/Icons";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
@@ -75,7 +76,13 @@ function LeftNavBar() {
   const handleLogoClick = () => {};
 
   const handleLogout = () => {
-    router.push("/login");
+    try {
+      logout();
+    } catch (e) {
+      console.warn("LeftNavbar: logout failed", e);
+    }
+    // Use replace so back button doesn't return to protected pages
+    router.replace("/login");
   };
 
   return (

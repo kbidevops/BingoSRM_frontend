@@ -5,6 +5,7 @@ import { ModeToggle } from "@/src/components/theme/modeToggle";
 import { useTheme as useNextTheme } from "next-themes";
 import Image from "next/image";
 import LoginForm from "./LoginForm";
+import { isAuthenticated } from "@/src/lib/auth";
 
 // MUI
 import { Box, Stack, Typography, keyframes } from "@mui/material";
@@ -34,6 +35,21 @@ export default function LoginPage() {
   const { resolvedTheme } = useNextTheme();
   const isDark = resolvedTheme === "dark";
   const [mounted, setMounted] = useState(false);
+  // If the user is already authenticated, perform a synchronous redirect
+  // using window.location.replace to avoid rendering the login UI briefly.
+  if (typeof window !== "undefined") {
+    try {
+      if (localStorage.getItem("isAuthenticated") === "true") {
+        const last = localStorage.getItem("lastPath");
+        const target = last && last !== "/login" ? last : "/";
+        if (window.location.pathname !== target)
+          window.location.replace(target);
+        return null;
+      }
+    } catch (e) {
+      // ignore localStorage access errors and continue to render login
+    }
+  }
 
   // Avoid rendering theme-dependent variations on server to prevent hydration
   // mismatch — wait until mounted to show client-resolved theme assets.

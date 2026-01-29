@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { login, updateUserPassword, type LoginRequest } from "@/src/lib/auth";
 import {
+  mapAssignedRowsToAllowed,
+  menuTree,
+  routeToNodeId,
+} from "@/src/lib/permissions";
+import {
   Box,
   Button,
   CircularProgress,
@@ -90,8 +95,36 @@ export default function InputLoginCredentials() {
           return;
         }
 
-        // Success - redirect to user management page
-        router.push("/user/user-management");
+        // Determine first allowed route from assigned data and navigate there
+        try {
+          const assignedList = Array.isArray(response.assigned)
+            ? response.assigned
+            : [];
+          const mapped = mapAssignedRowsToAllowed(assignedList, []);
+          const nodeIdToRoute: Record<string, string> = {};
+          Object.entries(routeToNodeId).forEach(([route, nid]) => {
+            if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
+          });
+
+          const findFirst = (nodes: typeof menuTree): string | null => {
+            for (const n of nodes) {
+              if (mapped.allowedNodeIds.has(n.id)) {
+                if (nodeIdToRoute[n.id]) return nodeIdToRoute[n.id];
+              }
+              if (n.children) {
+                const r = findFirst(n.children as any);
+                if (r) return r;
+              }
+            }
+            return null;
+          };
+
+          const target = findFirst(menuTree);
+          if (target) router.replace(target);
+          else router.replace("/");
+        } catch (e) {
+          router.replace("/");
+        }
       } else {
         setError(t("login.error.invalidCredentials"));
         setLoading(false);
@@ -133,9 +166,36 @@ export default function InputLoginCredentials() {
         userAuthData || undefined,
       );
 
-      // Password updated successfully, redirect to main page
+      // Password updated successfully, navigate to first allowed route if available
       setOpenPasswordDialog(false);
-      router.push("/user/user-management");
+      try {
+        const stored = window.localStorage.getItem("assigned");
+        const assignedList = stored ? JSON.parse(stored) : [];
+        const mapped = mapAssignedRowsToAllowed(assignedList, []);
+        const nodeIdToRoute: Record<string, string> = {};
+        Object.entries(routeToNodeId).forEach(([route, nid]) => {
+          if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
+        });
+
+        const findFirst = (nodes: typeof menuTree): string | null => {
+          for (const n of nodes) {
+            if (mapped.allowedNodeIds.has(n.id)) {
+              if (nodeIdToRoute[n.id]) return nodeIdToRoute[n.id];
+            }
+            if (n.children) {
+              const r = findFirst(n.children as any);
+              if (r) return r;
+            }
+          }
+          return null;
+        };
+
+        const target = findFirst(menuTree);
+        if (target) router.replace(target);
+        else router.replace("/");
+      } catch (e) {
+        router.replace("/");
+      }
     } catch (err) {
       console.error("Password update error:", err);
       setPasswordError(t("login.error.passwordUpdateFailed"));

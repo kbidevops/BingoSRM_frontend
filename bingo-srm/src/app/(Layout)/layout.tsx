@@ -8,6 +8,10 @@ import TopNavBar from "@/src/components/sidebar/TopNavbar/TopNavbar";
 import { useLeftNavbarStore } from "@/src/store/navbar/leftNavbarStore";
 import { PermissionsProvider } from "@/src/context/PermissionsContext";
 import { getCurrentUser } from "@/src/lib/auth";
+import { useRouter } from "next/navigation";
+import usePermissions from "@/src/hooks/usePermissions";
+import { menuTree, routeToNodeId } from "@/src/lib/permissions";
+import { isAuthenticated } from "@/src/lib/auth";
 
 interface LayoutWithNavbarProps {
   children: ReactNode;
@@ -48,9 +52,71 @@ export default function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
           }}
         >
           <TopNavBar />
+          <RedirectToFirstAllowed />
           {children}
         </Stack>
       </PermissionsProvider>
     </Stack>
   );
+}
+
+function RedirectToFirstAllowed() {
+  const { allowedNodeIds, loading: permissionsLoading } = usePermissions();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (permissionsLoading) return;
+    if (!isAuthenticated()) return;
+    try {
+      const pathname =
+        typeof window !== "undefined" ? window.location.pathname : "/";
+      if (pathname !== "/" && pathname !== "/login") return;
+
+      // If user has a saved lastPath, try to use it when allowed
+      const lastPath =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("lastPath")
+          : null;
+
+      const nodeIdToRoute: Record<string, string> = {};
+      Object.entries(routeToNodeId).forEach(([route, nid]) => {
+        if (!nodeIdToRoute[nid]) nodeIdToRoute[nid] = route;
+      });
+
+      const routeToNode = (route: string): string | undefined =>
+        routeToNodeId[route];
+
+      if (lastPath) {
+        try {
+          const mappedNode = routeToNode(lastPath);
+          if (mappedNode && allowedNodeIds.has(mappedNode)) {
+            router.replace(lastPath);
+            return;
+          }
+        } catch (e) {
+          // ignore and fallback to first allowed
+        }
+      }
+
+      const findFirst = (nodes: typeof menuTree): string | null => {
+        for (const n of nodes) {
+          if (allowedNodeIds.has(n.id)) {
+            if (nodeIdToRoute[n.id]) return nodeIdToRoute[n.id];
+          }
+          if (n.children) {
+            const r = findFirst(n.children as any);
+            if (r) return r;
+          }
+        }
+        return null;
+      };
+
+      const target = findFirst(menuTree);
+      if (target) router.replace(target);
+    } catch (e) {
+      // ignore
+    }
+  }, [permissionsLoading, allowedNodeIds, router]);
+
+  return null;
 }
