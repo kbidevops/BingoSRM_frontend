@@ -16,7 +16,11 @@ import {
   Collapse,
   IconButton,
 } from "@mui/material";
-import { fetchProgramAccessAll, updateProgramAccess } from "@/src/lib/auth";
+import {
+  fetchProgramAccessAll,
+  updateProgramAccess,
+  fetchCodeTypes,
+} from "@/src/lib/auth";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CheckIcon from "@mui/icons-material/Check";
@@ -39,12 +43,7 @@ interface MenuNode {
   checked?: boolean;
 }
 
-const roles: Role[] = [
-  { id: "temp", name: "일시사용자", color: "#E0E0E0" },
-  { id: "admin", name: "시스템관리자", color: "#E0E0E0" },
-  { id: "manager", name: "시스템담당자", color: "#E0E0E0" },
-  { id: "requester", name: "SR요청자", color: "#E0E0E0" },
-];
+// Roles will be loaded from server: GET /api/v1/code-types/R0/codes
 
 const menuTree: MenuNode[] = [
   {
@@ -226,10 +225,9 @@ export default function ProgramAuth() {
   const { t } = useTranslation();
   const locale = useLocale();
 
-  const [selectedRole, setSelectedRole] = useState<Role>(roles[1]);
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(
-    new Set(["member-join", "signup", "signup-info"]),
-  );
+  const [roles, setRoles] = React.useState<Role[]>([]);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
     new Set(["itsm", "basic-info", "member-join"]),
   );
@@ -377,6 +375,43 @@ export default function ProgramAuth() {
     }
   };
 
+  // Load roles (user types) from code types API on mount
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const codes = await fetchCodeTypes("R0");
+        if (!mounted) return;
+        // Filter out roles we don't want to display (기관담당자, 상담센터)
+        const filtered = codes.filter((c) => {
+          const name = ((c.cmmnCodeNm as string) || (c.cmmnCodeDc as string) || "").trim();
+          return name !== "기관담당자" && name !== "상담센터";
+        });
+        const mapped: Role[] = filtered.map((c) => ({
+          id: (c.cmmnCode as string) || "",
+          name: (c.cmmnCodeNm as string) || (c.cmmnCodeDc as string) || "",
+          color: "#E0E0E0",
+        }));
+        setRoles(mapped);
+        if (mapped.length > 0) {
+          setSelectedRole(mapped[0]);
+          // load program access for default role
+          try {
+            await loadProgramAccessForRole(mapped[0].id);
+          } catch (err) {
+            console.error("Failed to load program access for default role", err);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load roles", err);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Helper function to get all descendant IDs
   const getAllDescendantIds = (node: MenuNode): string[] => {
     const ids: string[] = [node.id];
@@ -439,7 +474,8 @@ export default function ProgramAuth() {
 
   const handleSave = () => {
     const assigned = Array.from(checkedItems);
-    console.log("Saving permissions for", selectedRole.name, assigned);
+    console.log("Saving permissions for", selectedRole?.name, assigned);
+    if (!selectedRole) return;
     // call PUT /api/v1/program-access/{authorCode}
     updateProgramAccess(selectedRole.id, assigned)
       .then((res) => {
@@ -525,17 +561,14 @@ export default function ProgramAuth() {
                 key={role.id}
                 sx={{
                   cursor: "pointer",
-                  bgcolor:
-                    selectedRole.id === role.id ? "primary.main" : role.color,
+                  bgcolor: selectedRole?.id === role.id ? "primary.main" : role.color,
                   border: "2px solid",
-                  borderColor:
-                    selectedRole.id === role.id ? "primary.main" : "divider",
+                  borderColor: selectedRole?.id === role.id ? "primary.main" : "divider",
                   borderRadius: 2.5,
                   transition: "all 0.2s ease",
-                  boxShadow:
-                    selectedRole.id === role.id
-                      ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-                      : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                  boxShadow: selectedRole?.id === role.id
+                    ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                    : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                   "&:hover": {
                     transform: "translateY(-4px)",
                     boxShadow:
@@ -559,10 +592,7 @@ export default function ProgramAuth() {
                     sx={{
                       position: "relative",
                       mb: 2,
-                      color:
-                        selectedRole.id === role.id
-                          ? "white"
-                          : "text.secondary",
+                      color: selectedRole?.id === role.id ? "white" : "text.secondary",
                     }}
                   >
                     <PersonIcon sx={{ fontSize: 48 }} />
@@ -579,7 +609,7 @@ export default function ProgramAuth() {
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: selectedRole.id === role.id ? "white" : "#1a1a1a",
+                      color: selectedRole?.id === role.id ? "white" : "#1a1a1a",
                     }}
                   >
                     {role.name}
@@ -616,8 +646,8 @@ export default function ProgramAuth() {
               variant="h6"
               sx={{ fontWeight: 600, fontSize: "1.1rem" }}
             >
-              <Box component="span" sx={{ color: "primary.main" }}>
-                {selectedRole.name}
+                <Box component="span" sx={{ color: "primary.main" }}>
+                {selectedRole?.name ?? ""}
               </Box>{" "}
               {t("programAccess.accessControl")}
             </Typography>

@@ -128,9 +128,14 @@ export async function fetchProgramAccessAll(
   const url = `${API_BASE_URL}/api/v1/program-access?authorCode=${encodeURIComponent(
     authorCode,
   )}`;
+  // Use userTyCode header instead of userId for this endpoint
+  const userTyCode = localStorage.getItem("userTyCode") || "";
   const res = await authFetch(url, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Ty-Code": userTyCode,
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch program access: ${res.statusText}`);
