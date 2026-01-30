@@ -233,6 +233,33 @@ export async function updateProgramAccess(
   }
 }
 
+// Update assigned sys-chargers for a specific user
+export async function updateUserSysChargers(
+  userId: string,
+  sysCodes: string[],
+): Promise<{ success: boolean; message?: string } | void> {
+  const url = `${API_BASE_URL}/api/v1/sys-chargers/${encodeURIComponent(
+    userId,
+  )}`;
+  const body = { sysCodes };
+  const res = await authFetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Failed to update sys-chargers:", res.status, text);
+    throw new Error(`Failed to update sys-chargers: ${res.statusText}`);
+  }
+  if (res.status === 204) return { success: true };
+  try {
+    return await res.json();
+  } catch {
+    return { success: true };
+  }
+}
+
 export async function fetchVisibleMenus(
   userRoleCode?: string,
 ): Promise<AssignedMenu[]> {

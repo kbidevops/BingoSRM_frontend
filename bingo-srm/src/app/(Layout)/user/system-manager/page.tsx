@@ -22,6 +22,7 @@ import RequirePermission from "@/src/components/RequirePermission";
 import {
   fetchUsersByRole,
   fetchCodeTypes,
+  updateUserSysChargers,
   type UserData,
 } from "@/src/lib/auth";
 import SearchIcon from "@mui/icons-material/Search";
@@ -124,7 +125,12 @@ export default function SystemManager() {
           if (!it) return null;
           if (typeof it === "string") return it;
           return (
-            it.systemName || it.systemNm || it.sysCodeNm || it.name || it.menuNm || it.label
+            it.systemName ||
+            it.systemNm ||
+            it.sysCodeNm ||
+            it.name ||
+            it.menuNm ||
+            it.label
           );
         })
         .filter(Boolean) as string[];
@@ -165,7 +171,12 @@ export default function SystemManager() {
       const mapped = items
         .map((it: any, idx: number) => {
           const label =
-            it.systemName || it.systemNm || it.sysCodeNm || it.name || it.menuNm || it.label;
+            it.systemName ||
+            it.systemNm ||
+            it.sysCodeNm ||
+            it.name ||
+            it.menuNm ||
+            it.label;
           const id = it.systemId || it.sysCode || it.id || String(idx);
           if (!label) return null;
           return { id: String(id), label };
@@ -254,12 +265,23 @@ export default function SystemManager() {
   };
 
   const handleSave = () => {
-    console.log(
-      "Saving permissions for",
-      selectedManager?.userId,
-      selectedPermissions,
-    );
-    // API call to save permissions
+    if (!selectedManager) return;
+    // Find sysCodes from assignableSystems that match selectedPermissions labels
+    const sysCodes = assignableSystems
+      .filter((s) => selectedPermissions.includes(s.label))
+      .map((s) => s.id);
+
+    console.log("Saving permissions for", selectedManager.userId, sysCodes);
+    updateUserSysChargers(selectedManager.userId, sysCodes)
+      .then(() => {
+        // Refresh assigned systems after successful save
+        fetchAssignedSystems(selectedManager.userId, true).catch(() =>
+          setSelectedPermissions(selectedManager.permissions || []),
+        );
+      })
+      .catch((err) => {
+        console.error("Failed to save assigned systems:", err);
+      });
   };
 
   const filteredManagers = managers.filter((manager) => {
