@@ -91,6 +91,9 @@ export default function SystemManager() {
     DEFAULT_MANAGERS[0]?.permissions || [],
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [assignableSystems, setAssignableSystems] = useState<
+    { id: string; label: string }[]
+  >([]);
 
   // Fetch assigned systems for a given userId and map them to our permission labels.
   // Returns matched permission labels and optionally updates `selectedPermissions`.
@@ -121,7 +124,7 @@ export default function SystemManager() {
           if (!it) return null;
           if (typeof it === "string") return it;
           return (
-            it.systemName || it.systemNm || it.name || it.menuNm || it.label
+            it.systemName || it.systemNm || it.sysCodeNm || it.name || it.menuNm || it.label
           );
         })
         .filter(Boolean) as string[];
@@ -135,6 +138,43 @@ export default function SystemManager() {
     } catch (err) {
       console.error("Error fetching assigned systems", err);
       if (setSelected) setSelectedPermissions([]);
+      return [];
+    }
+  };
+
+  // Fetch assignable systems for a given userId (for the right-panel list)
+  const fetchAssignableSystems = async (
+    userId: string,
+  ): Promise<{ id: string; label: string }[]> => {
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090";
+      const url = `${base}/api/v1/sys-chargers?userId=${encodeURIComponent(
+        userId,
+      )}`;
+      const res = await authFetch(url, { method: "GET" });
+      if (!res.ok) {
+        console.warn("Failed to fetch assignable systems", res.status);
+        return [];
+      }
+      const json = await res.json();
+      let items: any[] = [];
+      if (Array.isArray(json)) items = json;
+      else if (Array.isArray(json.resultList)) items = json.resultList;
+      else if (Array.isArray(json.data)) items = json.data;
+
+      const mapped = items
+        .map((it: any, idx: number) => {
+          const label =
+            it.systemName || it.systemNm || it.sysCodeNm || it.name || it.menuNm || it.label;
+          const id = it.systemId || it.sysCode || it.id || String(idx);
+          if (!label) return null;
+          return { id: String(id), label };
+        })
+        .filter(Boolean) as { id: string; label: string }[];
+
+      return mapped;
+    } catch (err) {
+      console.error("Error fetching assignable systems", err);
       return [];
     }
   };
@@ -178,6 +218,10 @@ export default function SystemManager() {
         fetchAssignedSystems(withPermissions[0].userId, true).catch(() =>
           setSelectedPermissions(withPermissions[0].permissions || []),
         );
+        // also load assignable systems for the selected manager
+        fetchAssignableSystems(withPermissions[0].userId)
+          .then((list) => setAssignableSystems(list))
+          .catch(() => setAssignableSystems([]));
       }
     } catch (err) {
       console.error("Failed to load system managers", err);
@@ -191,9 +235,14 @@ export default function SystemManager() {
   const handleManagerSelect = (manager: SystemManager) => {
     setSelectedManager(manager);
     // load assigned systems from server and update checked items
-    fetchAssignedSystems(manager.userId).catch(() =>
+    // fetch assigned labels and set selectedPermissions so assigned items are checked
+    fetchAssignedSystems(manager.userId, true).catch(() =>
       setSelectedPermissions(manager.permissions || []),
     );
+    // load assignable systems for this manager
+    fetchAssignableSystems(manager.userId)
+      .then((list) => setAssignableSystems(list))
+      .catch(() => setAssignableSystems([]));
   };
 
   const handlePermissionToggle = (permission: string) => {
@@ -570,9 +619,12 @@ export default function SystemManager() {
                     gap: 2,
                   }}
                 >
-                  {systemPermissions.map((permission) => (
+                  {(assignableSystems.length
+                    ? assignableSystems
+                    : systemPermissions
+                  ).map((permission: any, idx: number) => (
                     <Box
-                      key={permission.id}
+                      key={permission.id ?? idx}
                       sx={{
                         p: 1,
                         borderRadius: 1,
