@@ -27,6 +27,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckIcon from "@mui/icons-material/Check";
+import { authFetch } from "@/src/lib/authFetch";
 
 interface SystemManager {
   id: number;
@@ -91,52 +92,22 @@ export default function SystemManager() {
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch role codes and then system manager users from server
-  const fetchManagers = async () => {
+  // Fetch assigned systems for a given userId and map them to our permission labels.
+  // Returns matched permission labels and optionally updates `selectedPermissions`.
+  const fetchAssignedSystems = async (
+    userId: string,
+    setSelected = false,
+  ): Promise<string[]> => {
     try {
-      const codes = await fetchCodeTypes("R0");
-      const sysRole = codes.find((r) => r.cmmnCodeNm === "시스템관리자");
-      const roleCode = sysRole?.cmmnCode;
-      if (!roleCode) return;
-      const resp = await fetchUsersByRole(roleCode, 1, 100);
-      const mapped = resp.resultList.map((u: UserData, idx: number) => ({
-        id: idx + 1,
-        userId: u.userId,
-        userName: u.userId,
-        displayName: u.userNm || u.userId,
-        role: u.userTyCodeNm || "",
-        avatarColor: "",
-        permissions: u.assigned ? (u.assigned as any).permissions || [] : [],
-      }));
-      setManagers(mapped.length ? mapped : DEFAULT_MANAGERS);
-      if (mapped.length) {
-        setSelectedManager(mapped[0]);
-        // prefer a fresh load of assigned systems from server for accuracy
-        fetchAssignedSystems(mapped[0].userId).catch(() =>
-          setSelectedPermissions(mapped[0].permissions || []),
-        );
-      }
-    } catch (err) {
-      console.error("Failed to load system managers", err);
-    }
-  };
-
-  // Fetch assigned systems for a given userId and map them to our permission labels
-  const fetchAssignedSystems = async (userId: string) => {
-    try {
-      const url = `/api/v1/sys-chargers/assigned?userId=${encodeURIComponent(
+      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090";
+      const url = `${base}/api/v1/sys-chargers/assigned?userId=${encodeURIComponent(
         userId,
       )}`;
-      const res = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`,
-        },
-      });
+      const res = await authFetch(url, { method: "GET" });
       if (!res.ok) {
         console.warn("Failed to fetch assigned systems", res.status);
-        setSelectedPermissions([]);
-        return;
+        if (setSelected) setSelectedPermissions([]);
+        return [];
       }
       const json = await res.json();
       // normalize possible response shapes
@@ -155,15 +126,61 @@ export default function SystemManager() {
         })
         .filter(Boolean) as string[];
 
-      // keep only permission labels that exist in our known systemPermissions
       const matched = systemPermissions
         .map((p) => p.label)
         .filter((lbl) => assignedNames.includes(lbl));
 
-      setSelectedPermissions(matched);
+      if (setSelected) setSelectedPermissions(matched);
+      return matched;
     } catch (err) {
       console.error("Error fetching assigned systems", err);
-      setSelectedPermissions([]);
+      if (setSelected) setSelectedPermissions([]);
+      return [];
+    }
+  };
+
+  // Fetch role codes and then system manager users from server
+  const fetchManagers = async () => {
+    try {
+      const codes = await fetchCodeTypes("R0");
+      const sysRole = codes.find((r) => r.cmmnCodeNm === "시스템관리자");
+      const roleCode = sysRole?.cmmnCode;
+      if (!roleCode) return;
+      const resp = await fetchUsersByRole(roleCode, 1, 100);
+      const mapped = resp.resultList.map((u: UserData, idx: number) => ({
+        id: idx + 1,
+        userId: u.userId,
+        userName: u.userId,
+        displayName: u.userNm || u.userId,
+        role: u.userTyCodeNm || "",
+        avatarColor: "",
+        // placeholder permissions until we fetch the assigned endpoint
+        permissions: u.assigned ? (u.assigned as any).permissions || [] : [],
+      }));
+
+      // Fetch assigned systems for each manager and populate their permissions
+      const withPermissions = await Promise.all(
+        mapped.map(async (m) => {
+          const perms = await fetchAssignedSystems(m.userId, false).catch(
+            () => m.permissions || [],
+          );
+          return {
+            ...m,
+            permissions: perms,
+          };
+        }),
+      );
+
+      setManagers(withPermissions.length ? withPermissions : DEFAULT_MANAGERS);
+      if (withPermissions.length) {
+        setSelectedManager(withPermissions[0]);
+        // load assigned systems for the selected manager and set selectedPermissions
+        fetchAssignedSystems(withPermissions[0].userId, true).catch(() =>
+          setSelectedPermissions(withPermissions[0].permissions || []),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load system managers", err);
     }
   };
 
