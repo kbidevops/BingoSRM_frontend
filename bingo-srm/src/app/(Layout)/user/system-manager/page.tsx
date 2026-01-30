@@ -306,6 +306,7 @@ export default function SystemManager() {
                     ),
                   }}
                   sx={{
+                    display: "none",
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 1.5,
                       bgcolor: "background.default",
